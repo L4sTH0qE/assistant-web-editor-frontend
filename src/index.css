@@ -1,83 +1,197 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --hse-blue: #0F2D69;
-  --hse-blue-light: #234B9B;
-  --hse-blue-accent: #0FA0D7;
-  --hse-green-accent: #009B64;
-  --hse-orange-accent: #EB691E;
-  --hse-gray: #f0f2f5;
+    --hse-blue: #0F2D69;
+    --hse-gray: #808080;
+    --hse-blue-light: #234B9B;
+    --hse-blue-accent: #0FA0D7;
+    --hse-red-accent: #E61E3C;
+    --hse-green-accent: #009B64;
+    --hse-orange-accent: #EB691E;
+    --hse-gray-accent: #E6E6E6;
 }
 
 @font-face {
-  font-family: 'HSE Sans';
-  src: url('./assets/fonts/HSESans-Regular.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'HSE Sans';
+    src: url('./assets/fonts/HSESans-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'HSE Sans';
-  src: url('./assets/fonts/HSESans-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'HSE Sans';
+    src: url('./assets/fonts/HSESans-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'HSE Sans';
-  src: url('./assets/fonts/HSESans-SemiBold.otf') format('opentype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'HSE Sans';
+    src: url('./assets/fonts/HSESans-SemiBold.otf') format('opentype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: 'HSE Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--hse-gray);
-  color: #333;
+    margin: 0;
+    padding: 0;
+    font-family: 'HSE Sans', sans-serif;
+    background-color: var(--hse-gray);
+    color: #333;
 }
 
 .ant-btn-primary {
-  background-color: var(--hse-blue) !important;
-  border-radius: 2px !important;
+    background-color: var(--hse-blue) !important;
+    border-radius: 2px !important;
 }
 
 .ant-btn-primary:hover {
-  background: var(--hse-blue-light) !important;
-  border-radius: 2px !important;
+    background: var(--hse-blue-light) !important;
+    border-radius: 2px !important;
 }
 
 .ant-layout-header {
-  background: var(--hse-blue) !important;
-  padding: 0 24px !important;
+    background: var(--hse-blue) !important;
+    padding: 0 24px !important;
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+    width: 8px;
+    height: 8px;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
+    background: #ccc;
+    border-radius: 4px;
 }
 
 .input-group:hover .ant-input {
-  border-color: #000000;
+    border-color: #000000;
+}
+
+/* Стили для текстового блока внутри редактора */
+.hse-text-content {
+    font-size: 16px;
+    font-family: 'HSE Sans', 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+.hse-text-content p {
+    margin-bottom: 1em;
+}
+
+.hse-text-content a {
+    color: var(--hse-blue-accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hse-blue-accent);
+}
+
+.hse-text-content h1,
+.hse-text-content h2,
+.hse-text-content h3,
+.hse-text-content h4,
+.hse-text-content h5,
+.hse-text-content h6 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.hse-text-content ul {
+    list-style: none;
+}
+
+.hse-text-content ul li {
+    position: relative;
+}
+
+.hse-text-content ul li::before {
+    content: "—";
+    position: absolute;
+    left: -1.2em;
+    font-weight: 600;
 }
 
 /* Стили для Tiptap внутри редактора */
 .ProseMirror {
-  outline: none;
-  min-height: 100px;
+    outline: none;
+    min-height: 100px;
 }
+
 .ProseMirror > p {
-  margin-top: 0;
-  margin-bottom: 0.5em;
+    margin-top: 0;
+    margin-bottom: 0.5em;
 }
+
 .ProseMirror ul, .ProseMirror ol {
-  padding-left: 1.5em;
+    padding-left: 1.5em;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.ProseMirror h1[id]:after,
+.ProseMirror h2[id]:after,
+.ProseMirror h3[id]:after {
+    content: '#';
+    color: var(--hse-gray);
+    font-size: 0.6em;
+    vertical-align: super;
+    margin-left: 4px;
+}
+
+.ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+    margin: 10px 0;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+    outline: 2px solid var(--hse-blue);
+}
+
+.ProseMirror a {
+    color: var(--hse-blue-accent);
+    cursor: pointer;
+    border-bottom: 1px solid var(--hse-blue-accent);
+    transition: all 0.1s ease;
+}
+
+.ProseMirror a:hover {
+    color: var(--hse-red-accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hse-red-accent);
+}
+
+.ProseMirror ul {
+    list-style: none;
+}
+
+.ProseMirror ul li {
+    position: relative;
+}
+
+.ProseMirror ul li::before {
+    content: "—";
+    position: absolute;
+    left: -1.2em;
+    font-weight: 600;
+}
+
+.custom-label-font .ant-form-item-label > label {
+    font-family: 'HSE Sans', sans-serif;
 }

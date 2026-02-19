@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography, Tabs } from 'antd';
-import { UserOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import React, {useState} from 'react';
+import {Button, Card, Form, Input, message, Tabs, Typography} from 'antd';
+import {LockOutlined, UserOutlined} from '@ant-design/icons';
+import {useNavigate} from 'react-router-dom';
+import {useDispatch} from 'react-redux';
 import api from '../utils/api';
-import { loginSuccess } from '../store/authSlice';
+import {loginSuccess} from '../store/authSlice';
 
-const { Title, Text } = Typography;
+const {Title, Text} = Typography;
 
 const LoginPage = () => {
     const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ const LoginPage = () => {
         }
     };
 
-    const AuthForm = ({ isRegister }) => (
+    const AuthForm = ({isRegister}) => (
         <Form
             name={isRegister ? "register" : "login"}
             onFinish={onFinish}
@@ -65,22 +65,22 @@ const LoginPage = () => {
                 name="username"
                 label={<Text strong>Логин (Email)</Text>}
                 rules={[
-                    { required: true, message: 'Введите логин!' },
-                    { type: 'email', message: 'Некорректный email' }
+                    {required: true, message: 'Введите логин!'},
+                    {type: 'email', message: 'Некорректный email'}
                 ]}
             >
-                <Input prefix={<UserOutlined />} placeholder="ivanov@hse.ru" size="large" />
+                <Input prefix={<UserOutlined/>} placeholder="ivanov@hse.ru" size="large"/>
             </Form.Item>
 
             <Form.Item
                 name="password"
                 label={<Text strong>Пароль</Text>}
                 rules={[
-                    { required: true, message: 'Введите пароль!' },
-                    { min: 8, message: 'Минимум 8 символов' }
+                    {required: true, message: 'Введите пароль!'},
+                    {min: 8, message: 'Минимум 8 символов'}
                 ]}
             >
-                <Input.Password prefix={<LockOutlined />} placeholder="••••••" size="large" />
+                <Input.Password prefix={<LockOutlined/>} placeholder="••••••" size="large"/>
             </Form.Item>
             {isRegister && (
                 <Form.Item
@@ -88,8 +88,8 @@ const LoginPage = () => {
                     label={<Text strong>Повторите пароль</Text>}
                     dependencies={['password']}
                     rules={[
-                        { required: true, message: 'Повторите пароль!' },
-                        ({ getFieldValue }) => ({
+                        {required: true, message: 'Повторите пароль!'},
+                        ({getFieldValue}) => ({
                             validator(_, value) {
                                 if (!value || getFieldValue('password') === value) {
                                     return Promise.resolve();
@@ -99,12 +99,12 @@ const LoginPage = () => {
                         }),
                     ]}
                 >
-                    <Input.Password prefix={<LockOutlined />} placeholder="••••••" size="large" />
+                    <Input.Password prefix={<LockOutlined/>} placeholder="••••••" size="large"/>
                 </Form.Item>
             )}
 
             <Form.Item>
-                <Button type="primary" htmlType="submit" loading={loading} block size="large" style={{ marginTop: 10 }}>
+                <Button type="primary" htmlType="submit" loading={loading} block size="large" style={{marginTop: 10}}>
                     {isRegister ? 'Зарегистрироваться' : 'Войти'}
                 </Button>
             </Form.Item>
@@ -115,12 +115,12 @@ const LoginPage = () => {
         {
             key: 'login',
             label: 'Вход',
-            children: <AuthForm isRegister={false} />,
+            children: <AuthForm isRegister={false}/>,
         },
         {
             key: 'register',
             label: 'Регистрация',
-            children: <AuthForm isRegister={true} />,
+            children: <AuthForm isRegister={true}/>,
         },
     ];
 
@@ -134,11 +134,11 @@ const LoginPage = () => {
             backgroundImage: 'linear-gradient(135deg, #0F2D69 0%, #234B9B 100%)' // Градиент для красоты
         }}>
             <Card
-                style={{ width: 420, borderRadius: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                style={{width: 420, borderRadius: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.15)'}}
                 bordered={false}
             >
-                <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                    <Title level={3} style={{ color: 'var(--hse-blue)', margin: 0 }}>
+                <div style={{textAlign: 'center', marginBottom: 24}}>
+                    <Title level={3} style={{color: 'var(--hse-blue)', margin: 0}}>
                         Помощник Редактора
                     </Title>
                     <Text type="secondary">Авторизация в системе</Text>

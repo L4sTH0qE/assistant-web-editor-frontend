@@ -1,5 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { v4 as uuidv4 } from 'uuid';
+import {createSlice} from '@reduxjs/toolkit';
+import {v4 as uuidv4} from 'uuid';
 
 const initialState = {
     pageId: null,
@@ -33,10 +33,10 @@ const editorSlice = createSlice({
             state.isSaved = false;
         },
         updateBlockProps: (state, action) => {
-            const { id, props } = action.payload;
+            const {id, props} = action.payload;
             const block = state.blocks.find(b => b.id === id);
             if (block) {
-                block.props = { ...block.props, ...props };
+                block.props = {...block.props, ...props};
                 state.isSaved = false;
             }
         },
@@ -48,7 +48,7 @@ const editorSlice = createSlice({
             state.isSaved = false;
         },
         reorderBlocks: (state, action) => {
-            const { oldIndex, newIndex } = action.payload;
+            const {oldIndex, newIndex} = action.payload;
             const result = Array.from(state.blocks);
             const [removed] = result.splice(oldIndex, 1);
             result.splice(newIndex, 0, removed);
@@ -61,5 +61,13 @@ const editorSlice = createSlice({
     },
 });
 
-export const { setPageData, setIsSaved, addBlock, updateBlockProps, removeBlock, reorderBlocks, selectBlock } = editorSlice.actions;
+export const {
+    setPageData,
+    setIsSaved,
+    addBlock,
+    updateBlockProps,
+    removeBlock,
+    reorderBlocks,
+    selectBlock
+} = editorSlice.actions;
 export default editorSlice.reducer;

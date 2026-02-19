@@ -1,18 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, CopyOutlined, QuestionCircleFilled } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
+import React, {useEffect, useState} from 'react';
+import {Button, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography} from 'antd';
+import {
+    CopyOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    PlusOutlined,
+    QuestionCircleFilled,
+    UserOutlined
+} from '@ant-design/icons';
+import {useNavigate} from 'react-router-dom';
+import {v4 as uuidv4} from 'uuid';
 
 import api from '../utils/api';
 
-const { Title } = Typography;
-const { Option } = Select;
+const {Title} = Typography;
+const {Option} = Select;
 
 const PAGE_TYPES = {
-    BASIC: { label: 'Страница', color: 'var(--hse-blue-accent)' },
-    NEWS: { label: 'Новость', color: 'var(--hse-green-accent)' },
-    ANNOUNCEMENT: { label: 'Анонс', color: 'var(--hse-orange-accent)' }
+    BASIC: {label: 'Страница', color: 'var(--hse-blue-accent)'},
+    NEWS: {label: 'Новость', color: 'var(--hse-green-accent)'},
+    ANNOUNCEMENT: {label: 'Анонс', color: 'var(--hse-orange-accent)'}
 };
 
 
@@ -33,11 +40,11 @@ const DashboardPage = () => {
     const fetchPages = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/pages');
+            const {data} = await api.get('/pages');
             setPages(data);
 
             const uniqueAuthors = [...new Set(data.map(p => p.ownerName))];
-            setAuthorsFilter(uniqueAuthors.map(a => ({ text: a, value: a })));
+            setAuthorsFilter(uniqueAuthors.map(a => ({text: a, value: a})));
         } catch (error) {
             message.error('Не удалось загрузить список страниц');
         } finally {
@@ -66,7 +73,7 @@ const DashboardPage = () => {
                 slug: values.type === 'BASIC' ? values.slug : uuidv4()
             };
 
-            const { data } = await api.post('/pages', payload);
+            const {data} = await api.post('/pages', payload);
             message.success('Страница создана');
             setIsModalOpen(false);
             form.resetFields();
@@ -80,10 +87,10 @@ const DashboardPage = () => {
         try {
             const payload = {
                 ...values,
-                slug: values.type === 'BASIC' ? values.slug : uuidv4()
+                slug: editPage?.type === 'BASIC' ? values.slug : editPage?.slug
             };
 
-            const { data } = await api.put(`/pages/${editPage.id}`, payload);
+            const {data} = await api.put(`/pages/${editPage.id}`, payload);
             message.success('Страница обновлена');
             setIsEditModalOpen(false);
             form.resetFields();
@@ -119,7 +126,7 @@ const DashboardPage = () => {
             dataIndex: 'title',
             key: 'title',
             render: (text, record) => (
-                <a onClick={() => navigate(`/editor/${record.id}`)} style={{ fontWeight: 600 }}>{text}</a>
+                <a onClick={() => navigate(`/editor/${record.id}`)} style={{fontWeight: 600}}>{text}</a>
             ),
             sorter: (a, b) => a.title.localeCompare(b.title, "en-ru"),
         },
@@ -128,13 +135,13 @@ const DashboardPage = () => {
             dataIndex: 'type',
             key: 'type',
             render: (type) => {
-                const conf = PAGE_TYPES[type] || { label: type, color: 'default' };
+                const conf = PAGE_TYPES[type] || {label: type, color: 'default'};
                 return <Tag color={conf.color}>{conf.label}</Tag>;
             },
             filters: [
-                { text: 'Страница', value: 'BASIC' },
-                { text: 'Новость', value: 'NEWS' },
-                { text: 'Анонс', value: 'ANNOUNCEMENT' },
+                {text: 'Страница', value: 'BASIC'},
+                {text: 'Новость', value: 'NEWS'},
+                {text: 'Анонс', value: 'ANNOUNCEMENT'},
             ],
             onFilter: (value, record) => record.type === value,
         },
@@ -142,7 +149,7 @@ const DashboardPage = () => {
             title: 'Slug',
             dataIndex: 'slug',
             key: 'slug',
-            render: (slug) => <Typography.Text type="secondary" style={{ fontSize: 13 }}>{slug || '—'}</Typography.Text>
+            render: (slug) => <Typography.Text type="secondary" style={{fontSize: 13}}>{slug || '—'}</Typography.Text>
         },
         {
             title: 'Автор',
@@ -150,7 +157,7 @@ const DashboardPage = () => {
             key: 'ownerName',
             render: (ownerName) => (
                 <Space>
-                    <UserOutlined />
+                    <UserOutlined/>
                     <span>{ownerName?.fullName || ownerName || 'Я'}</span>
                 </Space>
             ),
@@ -161,7 +168,10 @@ const DashboardPage = () => {
             title: 'Обновлено',
             dataIndex: 'updatedAt',
             key: 'updatedAt',
-            render: (date) => new Date(date).toLocaleDateString('ru-RU') + ' ' + new Date(date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            render: (date) => new Date(date).toLocaleDateString('ru-RU') + ' ' + new Date(date).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            }),
             sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
             defaultSortOrder: 'descend',
             okType: 'danger',
@@ -172,7 +182,7 @@ const DashboardPage = () => {
             render: (_, record) => (
                 <Space>
                     <Tooltip title="Редактировать">
-                        <Button type="text" icon={<EditOutlined />} onClick={() => {
+                        <Button type="text" icon={<EditOutlined/>} onClick={() => {
                             setEditPage(record);
                             setIsEditModalOpen(true);
                         }}/>
@@ -180,12 +190,12 @@ const DashboardPage = () => {
                     <Tooltip title="Создать копию">
                         <Popconfirm
                             title="Создать копию страницы?"
-                            icon={<QuestionCircleFilled style={{ color: 'var(--hse-blue)' }} />}
+                            icon={<QuestionCircleFilled style={{color: 'var(--hse-blue)'}}/>}
                             onConfirm={() => handleDuplicate(record.id)}
                             okText="Да"
                             cancelText="Нет"
                         >
-                            <Button type="text" icon={<CopyOutlined />} />
+                            <Button type="text" icon={<CopyOutlined/>}/>
                         </Popconfirm>
                     </Tooltip>
                     <Tooltip title="Удалить">
@@ -197,7 +207,7 @@ const DashboardPage = () => {
                             okType="danger"
                             cancelText="Нет"
                         >
-                            <Button type="text" danger icon={<DeleteOutlined />} />
+                            <Button type="text" danger icon={<DeleteOutlined/>}/>
                         </Popconfirm>
                     </Tooltip>
                 </Space>
@@ -207,14 +217,14 @@ const DashboardPage = () => {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <Title level={2} style={{ margin: 0, color: 'var(--hse-blue)' }}>Доступные страницы</Title>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24}}>
+                <Title level={2} style={{margin: 0, color: 'var(--hse-blue)'}}>Доступные страницы</Title>
                 <Button
                     type="primary"
-                    icon={<PlusOutlined />}
+                    icon={<PlusOutlined/>}
                     size="large"
                     onClick={() => {
-                        setEditPage({ title: null, type: 'BASIC', slug: null });
+                        setEditPage({title: null, type: 'BASIC', slug: null});
                         setIsModalOpen(true);
                     }}
                 >
@@ -232,7 +242,7 @@ const DashboardPage = () => {
                     triggerAsc: 'Отсортировать по возрастанию',
                     cancelSort: 'Сбросить сортировку'
                 }}
-                pagination={{ pageSize: 10 }}
+                pagination={{pageSize: 10}}
             />
 
             <Modal
@@ -240,7 +250,7 @@ const DashboardPage = () => {
                 open={isModalOpen}
                 onCancel={() => {
                     setIsModalOpen(false);
-                    setEditPage({ title: null, type: 'BASIC', slug: null });
+                    setEditPage({title: null, type: 'BASIC', slug: null});
                     form.resetFields();
                 }}
                 onOk={() => form.submit()}
@@ -251,9 +261,9 @@ const DashboardPage = () => {
                     form={form}
                     layout="vertical"
                     onFinish={handleCreate}
-                    initialValues={{ title: null, type: 'BASIC', slug: null }}
+                    initialValues={{title: null, type: 'BASIC', slug: null}}
                 >
-                    <Form.Item name="type" label="Тип материала" rules={[{ required: true }]}>
+                    <Form.Item name="type" label="Тип материала" rules={[{required: true}]}>
                         <Select>
                             <Option value="BASIC">Основная страница (с постоянным адресом)</Option>
                             <Option value="NEWS">Новость (попадет в ленту)</Option>
@@ -264,21 +274,21 @@ const DashboardPage = () => {
                     <Form.Item
                         name="title"
                         label="Заголовок"
-                        rules={[{ required: true, message: 'Укажите заголовок страницы' }]}
+                        rules={[{required: true, message: 'Укажите заголовок страницы'}]}
                     >
-                        <Input placeholder="Например: О платформе MLOps" />
+                        <Input placeholder="Например: О платформе MLOps"/>
                     </Form.Item>
 
                     {typeValue === 'BASIC' && (
                         <Form.Item
                             name="slug"
                             label="Адрес страницы"
-                            rules={[{ required: true, message: 'Укажите адрес страницы' }]}
+                            rules={[{required: true, message: 'Укажите адрес страницы'}]}
                             helper="Латинские буквы, например: about_us"
                         >
                             <Space.Compact block className="input-group">
-                                <Input defaultValue="hse.ru/" style={{ width: '15%' }} readOnly />
-                                <Input placeholder="Например: about_us" style={{ width: '85%' }} />
+                                <Input defaultValue="hse.ru/" style={{width: '15%'}} readOnly/>
+                                <Input placeholder="Например: about_us" style={{width: '85%'}}/>
                             </Space.Compact>
                         </Form.Item>
                     )}
@@ -309,18 +319,18 @@ const DashboardPage = () => {
                     <Form.Item
                         name="title"
                         label="Заголовок"
-                        rules={[{ required: true, message: 'Укажите заголовок страницы' }]}
+                        rules={[{required: true, message: 'Укажите заголовок страницы'}]}
                     >
-                        <Input placeholder="Например: О платформе MLOps" />
+                        <Input placeholder="Например: О платформе MLOps"/>
                     </Form.Item>
 
                     {editPage?.type === 'BASIC' && (
                         <Form.Item
                             name="slug"
                             label="Адрес страницы"
-                            rules={[{ required: true, message: 'Укажите адрес страницы' }]}
+                            rules={[{required: true, message: 'Укажите адрес страницы'}]}
                         >
-                            <Input placeholder="Например: about_us" />
+                            <Input placeholder="Например: about_us"/>
                         </Form.Item>
                     )}
                 </Form>

@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { Layout, Button, Space, Typography, Spin, message, Divider, Modal } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, CloudUploadOutlined } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {useEffect, useState} from 'react';
+import {Button, Divider, Layout, message, Modal, Space, Spin, Typography} from 'antd';
+import {ArrowLeftOutlined, CloudUploadOutlined, SaveOutlined} from '@ant-design/icons';
+import {useNavigate, useParams} from 'react-router-dom';
+import {useDispatch, useSelector} from 'react-redux';
 
-import { Sidebar } from '../components/Editor/Sidebar';
-import { Canvas } from '../components/Editor/Canvas';
-import { PropertiesPanel } from '../components/Editor/PropertiesPanel';
-import { ExportModal } from '../components/Editor/ExportModal';
+import {Sidebar} from '../components/Editor/Sidebar';
+import {Canvas} from '../components/Editor/Canvas';
+import {PropertiesPanel} from '../components/Editor/PropertiesPanel';
+import {ExportModal} from '../components/Editor/ExportModal';
 
 import api from '../utils/api';
-import { setPageData, setIsSaved } from '../store/editorSlice';
+import {setIsSaved, setPageData} from '../store/editorSlice';
 
-const { Sider, Content, Header } = Layout;
-const { Text } = Typography;
+const {Sider, Content, Header} = Layout;
+const {Text} = Typography;
 
 const EditorPage = () => {
-    const { id } = useParams(); // id страницы из URL
+    const {id} = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const { blocks, title, isSaved } = useSelector(state => state.editor);
+    const {blocks, title, isSaved} = useSelector(state => state.editor);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -59,7 +59,7 @@ const EditorPage = () => {
     useEffect(() => {
         const fetchPageData = async () => {
             try {
-                const { data } = await api.get(`/pages/${id}`);
+                const {data} = await api.get(`/pages/${id}`);
 
                 dispatch(setPageData({
                     id: data.id,
@@ -97,7 +97,7 @@ const EditorPage = () => {
         try {
             await handleSave();
 
-            const { data } = await api.get(`/pages/${id}/export`);
+            const {data} = await api.get(`/pages/${id}/export`);
             setExportData(data);
             setIsExportOpen(true);
         } catch (error) {
@@ -106,11 +106,11 @@ const EditorPage = () => {
     };
 
     if (loading) {
-        return <div style={{ display: 'flex', justifyContent: 'center', marginTop: 100 }}><Spin size="large" /></div>;
+        return <div style={{display: 'flex', justifyContent: 'center', marginTop: 100}}><Spin size="large"/></div>;
     }
 
     return (
-        <Layout style={{ height: '100vh' }}>
+        <Layout style={{height: '100vh'}}>
             {/* Верхняя панель редактора */}
             <Header style={{
                 background: '#fff',
@@ -122,20 +122,33 @@ const EditorPage = () => {
                 height: 64
             }}>
                 <Space>
-                    <Button icon={<ArrowLeftOutlined />} onClick={handleBackClick}>Назад</Button>
-                    <Divider orientation="vertical" />
-                    <Text strong style={{ fontSize: 18, color: 'white' }}>{title}</Text>
-                    {!isSaved && <Text type="secondary" style={{ fontSize: 18, color: 'white' }}>(есть изменения)</Text>}
+                    <Button
+                        style={{width: '5vw', fontFamily: 'HSE Sans'}}
+                        icon={<ArrowLeftOutlined/>}
+                        onClick={handleBackClick}
+                    >
+                        Назад
+                    </Button>
+                    <Divider orientation="vertical"/>
+                    <Text strong style={{fontSize: 20, color: 'white', fontFamily: 'HSE Sans'}}>Редактирование
+                        страницы</Text>
+                    {!isSaved && <Text strong style={{fontSize: 20, color: 'white', fontFamily: 'HSE Sans'}}>(есть
+                        изменения)</Text>}
                 </Space>
                 <Space>
                     {/* Кнопка Экспорт */}
-                    <Button icon={<CloudUploadOutlined />} onClick={handleExport}>
+                    <Button
+                        style={{width: '8vw', fontFamily: 'HSE Sans'}}
+                        icon={<CloudUploadOutlined/>}
+                        onClick={handleExport}
+                    >
                         Экспорт HTML
                     </Button>
 
                     {/* Кнопка Сохранить */}
                     <Button
-                        icon={<SaveOutlined />}
+                        style={{width: '8vw', fontFamily: 'HSE Sans'}}
+                        icon={<SaveOutlined/>}
                         loading={saving}
                         onClick={handleSave}
                     >
@@ -145,22 +158,26 @@ const EditorPage = () => {
             </Header>
 
             <Layout>
-                <Sider width={240} theme="light" style={{ borderRight: '1px solid #eee' }}>
-                    <Sidebar />
+                {/* Список блоков */}
+                <Sider width='10vw' theme="light" style={{borderRight: '1px solid #eee'}}>
+                    <Sidebar/>
                 </Sider>
 
-                <Content style={{ overflowY: 'auto', padding: '24px', background: '#f5f5f5' }}>
-                    <Canvas />
+                {/* Отображение страницы */}
+                <Content style={{overflowY: 'auto', padding: '24px', background: '#f5f5f5'}}>
+                    <Canvas name={title}/>
                 </Content>
 
-                <Sider width={480} theme="light" style={{ borderLeft: '1px solid #eee' }}>
-                    <PropertiesPanel />
+                {/* Редактор текущего блока */}
+                <Sider width='30vw' theme="light" style={{borderLeft: '1px solid #eee'}}>
+                    <PropertiesPanel/>
                 </Sider>
             </Layout>
             <ExportModal
                 isOpen={isExportOpen}
                 onClose={() => setIsExportOpen(false)}
                 blocksData={exportData}
+                name={title}
             />
         </Layout>
     );

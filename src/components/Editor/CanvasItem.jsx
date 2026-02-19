@@ -1,18 +1,17 @@
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { Button, Tooltip } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectBlock, removeBlock } from '../../store/editorSlice';
-import { BlockRenderer } from '../Blocks/BlockRenderer';
+import {useSortable} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+import {Button, Tooltip} from 'antd';
+import {DeleteOutlined} from '@ant-design/icons';
+import {useDispatch, useSelector} from 'react-redux';
+import {removeBlock, selectBlock} from '../../store/editorSlice';
+import {BlockRenderer} from '../Blocks/BlockRenderer';
 
-export const CanvasItem = ({ block }) => {
+export const CanvasItem = ({block}) => {
     const dispatch = useDispatch();
     const selectedId = useSelector((state) => state.editor.selectedBlockId);
     const isSelected = selectedId === block.id;
 
-    // Хук dnd-kit
     const {
         attributes,
         listeners,
@@ -20,13 +19,13 @@ export const CanvasItem = ({ block }) => {
         transform,
         transition,
         isDragging
-    } = useSortable({ id: block.id });
+    } = useSortable({id: block.id});
 
-    // Стили блока
     const style = {
         transform: CSS.Translate.toString(transform),
         transition,
-        border: isSelected ? '2px solid var(--hse-blue)' : '1px solid transparent',
+        fontFamily: 'HSE Sans',
+        border: isSelected ? '2px solid var(--hse-blue)' : '2px solid transparent',
         marginBottom: '16px',
         background: '#fff',
         padding: '24px 16px',
@@ -59,18 +58,18 @@ export const CanvasItem = ({ block }) => {
             {...listeners}
             onClick={handleSelect}
         >
-            <div style={{ pointerEvents: 'none' }}>
-                <BlockRenderer block={block} />
+            <div style={{pointerEvents: 'none'}}>
+                <BlockRenderer block={block}/>
             </div>
 
             {isSelected && (
-                <div style={{ position: 'absolute', top: 0, right: 0 }}>
+                <div style={{position: 'absolute', top: 0, right: 0}}>
                     <Tooltip title="Удалить блок">
                         <Button
                             type="primary"
                             danger
                             shape="circle"
-                            icon={<DeleteOutlined />}
+                            icon={<DeleteOutlined/>}
                             onClick={handleDelete}
                             onPointerDown={(e) => e.stopPropagation()}
                         />
