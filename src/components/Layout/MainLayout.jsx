@@ -1,9 +1,19 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Avatar, Dropdown, Layout, Menu, Typography} from 'antd';
-import {AppstoreOutlined, LogoutOutlined, UserOutlined} from '@ant-design/icons';
+import {
+    AppstoreOutlined,
+    BarChartOutlined,
+    BookOutlined,
+    LogoutOutlined,
+    TagsOutlined,
+    UserOutlined
+} from '@ant-design/icons';
 import {Outlet, useLocation, useNavigate} from 'react-router-dom';
 import {useDispatch, useSelector} from 'react-redux';
 import {logout} from '../../store/authSlice';
+
+import {GlossaryModal} from '../Glossary/GlossaryModal';
+import {TaxonomyModal} from '../Taxonomy/TaxonomyModal';
 
 const {Header, Sider, Content} = Layout;
 const {Text} = Typography;
@@ -14,6 +24,9 @@ const MainLayout = () => {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth.user);
 
+    const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
+    const [isTaxonomyOpen, setIsTaxonomyOpen] = useState(false);
+
     const handleLogout = () => {
         dispatch(logout());
         navigate('/login');
@@ -23,16 +36,25 @@ const MainLayout = () => {
         items: [{key: '1', label: 'Выйти', icon: <LogoutOutlined/>, onClick: handleLogout}],
     };
 
+    const handleMenuClick = ({key}) => {
+        if (key === '/glossary') {
+            setIsGlossaryOpen(true);
+        } else if (key === '/taxonomy') {
+            setIsTaxonomyOpen(true);
+        } else {
+            navigate(key);
+        }
+    };
+
     return (
         <Layout style={{minHeight: '100vh'}}>
             <Header style={{
-                color: 'var(--hse-green-accent)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
             }}>
                 <Text strong style={{color: 'white', fontSize: '18px'}}>
-                    Помощник редактора
+                    Помощник редактора НИУ ВШЭ
                 </Text>
                 <div>
                     <Dropdown menu={userMenu} placement="bottomRight">
@@ -48,19 +70,24 @@ const MainLayout = () => {
                     <Menu
                         mode="inline"
                         selectedKeys={[location.pathname + location.search]}
-                        style={{height: '100%', borderRight: 0}}
+                        style={{height: '100%', borderRight: 0, padding: '2px'}}
                         items={[
-                            {key: '/', icon: <AppstoreOutlined/>, label: 'Каталог страниц'},
+                            {key: '/', icon: <AppstoreOutlined/>, label: 'Каталог страниц',},
+                            {key: '/analytics', icon: <BarChartOutlined/>, label: 'Аналитика'},
+                            {key: '/glossary', icon: <BookOutlined/>, label: 'Словарь ссылок'},
+                            {key: '/taxonomy', icon: <TagsOutlined/>, label: 'Справочник метаданных'},
                         ]}
-                        onClick={({key}) => navigate(key)}
+                        onClick={handleMenuClick}
                     />
                 </Sider>
                 <Layout style={{padding: '24px'}}>
-                    <Content style={{background: '#fff', padding: 24, margin: 0, minHeight: 280, borderRadius: '4px'}}>
+                    <Content style={{background: '#fff', minHeight: 280, borderRadius: '4px'}}>
                         <Outlet/>
                     </Content>
                 </Layout>
             </Layout>
+            <GlossaryModal isOpen={isGlossaryOpen} onClose={() => setIsGlossaryOpen(false)}/>
+            <TaxonomyModal isOpen={isTaxonomyOpen} onClose={() => setIsTaxonomyOpen(false)}/>
         </Layout>
     );
 };

@@ -41,7 +41,7 @@ export const Canvas = (props) => {
             style={{
                 minHeight: '100%',
                 padding: '0 40px 100px 40px',
-                maxWidth: '900px',
+                maxWidth: '1000px',
                 margin: '0 auto',
                 cursor: 'default'
             }}

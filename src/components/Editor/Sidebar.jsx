@@ -21,7 +21,7 @@ export const Sidebar = () => {
     return (
         <div style={{padding: '16px', background: '#fff', height: '100%', borderRight: '1px solid #eee'}}>
             <Title level={4} style={{margin: 0, fontFamily: 'HSE Sans'}}>
-                Блоки
+                Добавить блоки
             </Title>
             <Space orientation="vertical" style={{width: '100%', marginTop: '16px'}}>
                 {TOOLS.map((tool) => (

@@ -1,66 +1,63 @@
-import React, {useEffect, useState} from 'react';
-import {Button, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography} from 'antd';
-import {
-    CopyOutlined,
-    DeleteOutlined,
-    EditOutlined,
-    PlusOutlined,
-    QuestionCircleFilled,
-    UserOutlined
-} from '@ant-design/icons';
-import {useNavigate} from 'react-router-dom';
-import {v4 as uuidv4} from 'uuid';
-
+import React, { useEffect, useState } from 'react';
+import { Button, Card, Col, Row, Statistic, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography, Tabs, Badge, List, Progress, Alert } from 'antd';
+import { CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, PieChartOutlined, PlusOutlined, QuestionCircleFilled, UserOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import api from '../utils/api';
 
-const {Title} = Typography;
-const {Option} = Select;
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const PAGE_TYPES = {
-    BASIC: {label: 'Страница', color: 'var(--hse-blue-accent)'},
-    NEWS: {label: 'Новость', color: 'var(--hse-green-accent)'},
-    ANNOUNCEMENT: {label: 'Анонс', color: 'var(--hse-orange-accent)'}
+    BASIC: { label: 'Простая страница', color: 'var(--hse-blue-accent)' },
+    NEWS: { label: 'Новость', color: 'var(--hse-green-accent)' },
+    ANNOUNCEMENT: { label: 'Анонс', color: 'var(--hse-orange-accent)' }
 };
 
+const SYNC_STATUSES = {
+    DRAFT: { text: 'Черновик (Не выгружалось)', status: 'default' },
+    SYNCED: { text: 'Синхронизировано', status: 'success' },
+    DESYNCED: { text: 'Рассинхронизация', status: 'error' },
+};
 
 const DashboardPage = () => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editPage, setEditPage] = useState(null);
-
-    const [authorsFilter, setAuthorsFilter] = useState([]);
+    const [stats, setStats] = useState({
+        totalPages: 0, byType: {}, syncStatuses: {}, authorsActive: {}, rubrics: {}, tags: {}
+    });
 
     const [form] = Form.useForm();
     const typeValue = Form.useWatch('type', form);
-
     const navigate = useNavigate();
 
-    const fetchPages = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const {data} = await api.get('/pages');
-            setPages(data);
-
-            const uniqueAuthors = [...new Set(data.map(p => p.ownerName))];
-            setAuthorsFilter(uniqueAuthors.map(a => ({text: a, value: a})));
+            const [pagesRes, statsRes] = await Promise.all([
+                api.get('/pages'),
+                api.get('/analytics').catch(() => ({ data: { totalPages: 0, byType: {}, rubrics: {}, authorsActive: {} } })) // Фолбэк если API еще не готово
+            ]);
+            setPages(pagesRes.data);
+            setStats(statsRes.data);
         } catch (error) {
-            message.error('Не удалось загрузить список страниц');
+            message.error('Ошибка загрузки данных');
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchPages();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
     const handleDuplicate = async (id) => {
         try {
-            await api.post(`/pages/${id}/duplicate`);
+            const payload = {
+                slug: uuidv4()
+            };
+            await api.post(`/pages/${id}/duplicate`, payload);
             message.success('Страница скопирована');
-            fetchPages();
+            fetchData();
         } catch (e) {
             message.error('Ошибка копирования');
         }
@@ -72,8 +69,11 @@ const DashboardPage = () => {
                 ...values,
                 slug: values.type === 'BASIC' ? values.slug : uuidv4()
             };
-
-            const {data} = await api.post('/pages', payload);
+            if (values.type === 'BASIC' && !(/^[a-z0-9_-]+$/.test(values.slug))) {
+                message.error('Неверно указан путь');
+                return;
+            }
+            const { data } = await api.post('/pages', payload);
             message.success('Страница создана');
             setIsModalOpen(false);
             form.resetFields();
@@ -83,38 +83,11 @@ const DashboardPage = () => {
         }
     };
 
-    const handleEdit = async (values) => {
-        try {
-            const payload = {
-                ...values,
-                slug: editPage?.type === 'BASIC' ? values.slug : editPage?.slug
-            };
-
-            const {data} = await api.put(`/pages/${editPage.id}`, payload);
-            message.success('Страница обновлена');
-            setIsEditModalOpen(false);
-            form.resetFields();
-            navigate(`/editor/${editPage.id}`);
-        } catch (error) {
-            message.error('Ошибка обновления');
-        }
-    };
-
-    useEffect(() => {
-        if (editPage) {
-            form.setFieldsValue({
-                type: editPage.type,
-                title: editPage.title,
-                slug: editPage.slug
-            });
-        }
-    }, [editPage, form]);
-
     const handleDelete = async (id) => {
         try {
             await api.delete(`/pages/${id}`);
             message.success('Удалено');
-            fetchPages();
+            fetchData();
         } catch (error) {
             message.error('Не удалось удалить страницу');
         }
@@ -126,55 +99,42 @@ const DashboardPage = () => {
             dataIndex: 'title',
             key: 'title',
             render: (text, record) => (
-                <a onClick={() => navigate(`/editor/${record.id}`)} style={{fontWeight: 600}}>{text}</a>
+                <a onClick={() => navigate(`/editor/${record.id}`)} style={{ fontWeight: 600, color: 'var(--hse-blue)' }}>{text}</a>
             ),
-            sorter: (a, b) => a.title.localeCompare(b.title, "en-ru"),
+            sorter: (a, b) => a.title.localeCompare(b.title, "ru-RU"),
         },
         {
             title: 'Тип',
             dataIndex: 'type',
             key: 'type',
-            render: (type) => {
-                const conf = PAGE_TYPES[type] || {label: type, color: 'default'};
-                return <Tag color={conf.color}>{conf.label}</Tag>;
-            },
-            filters: [
-                {text: 'Страница', value: 'BASIC'},
-                {text: 'Новость', value: 'NEWS'},
-                {text: 'Анонс', value: 'ANNOUNCEMENT'},
-            ],
+            render: (type) => <Tag color={PAGE_TYPES[type]?.color || 'default'}>{PAGE_TYPES[type]?.label || type}</Tag>,
+            filters: Object.keys(PAGE_TYPES).map(k => ({ text: PAGE_TYPES[k].label, value: k })),
             onFilter: (value, record) => record.type === value,
         },
         {
-            title: 'Slug',
-            dataIndex: 'slug',
-            key: 'slug',
-            render: (slug) => <Typography.Text type="secondary" style={{fontSize: 13}}>{slug || '—'}</Typography.Text>
+            title: 'Синхронизация',
+            dataIndex: 'syncStatus',
+            key: 'syncStatus',
+            render: (status) => {
+                const conf = SYNC_STATUSES[status || 'DRAFT'];
+                return <Badge status={conf.status} text={conf.text} />;
+            },
+            filters: Object.keys(SYNC_STATUSES).map(k => ({ text: SYNC_STATUSES[k].text, value: k })),
+            onFilter: (value, record) => (record.syncStatus || 'DRAFT') === value,
         },
         {
             title: 'Автор',
             dataIndex: 'ownerName',
             key: 'ownerName',
-            render: (ownerName) => (
-                <Space>
-                    <UserOutlined/>
-                    <span>{ownerName?.fullName || ownerName || 'Я'}</span>
-                </Space>
-            ),
-            filters: authorsFilter,
-            onFilter: (value, record) => record.ownerName === value,
+            render: (name) => <Space><UserOutlined /><span>{name || 'Unknown'}</span></Space>,
         },
         {
             title: 'Обновлено',
             dataIndex: 'updatedAt',
             key: 'updatedAt',
-            render: (date) => new Date(date).toLocaleDateString('ru-RU') + ' ' + new Date(date).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            }),
+            render: (date) => new Date(date).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
             sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
             defaultSortOrder: 'descend',
-            okType: 'danger',
         },
         {
             title: '',
@@ -182,155 +142,75 @@ const DashboardPage = () => {
             render: (_, record) => (
                 <Space>
                     <Tooltip title="Редактировать">
-                        <Button type="text" icon={<EditOutlined/>} onClick={() => {
-                            setEditPage(record);
-                            setIsEditModalOpen(true);
-                        }}/>
+                        <Button type="text" icon={<EditOutlined />} onClick={() => navigate(`/editor/${record.id}`)} />
                     </Tooltip>
                     <Tooltip title="Создать копию">
-                        <Popconfirm
-                            title="Создать копию страницы?"
-                            icon={<QuestionCircleFilled style={{color: 'var(--hse-blue)'}}/>}
-                            onConfirm={() => handleDuplicate(record.id)}
-                            okText="Да"
-                            cancelText="Нет"
-                        >
-                            <Button type="text" icon={<CopyOutlined/>}/>
+                        <Popconfirm title="Создать копию страницы?" icon={<QuestionCircleFilled style={{color: 'var(--hse-blue)'}}/>} onConfirm={() => handleDuplicate(record.id)} okText="Да" cancelText="Нет">
+                            <Button type="text" icon={<CopyOutlined />} />
                         </Popconfirm>
                     </Tooltip>
                     <Tooltip title="Удалить">
-                        <Popconfirm
-                            title="Удалить страницу?"
-                            description="Это действие нельзя отменить."
-                            onConfirm={() => handleDelete(record.id)}
-                            okText="Да"
-                            okType="danger"
-                            cancelText="Нет"
-                        >
-                            <Button type="text" danger icon={<DeleteOutlined/>}/>
+                        <Popconfirm title="Удалить страницу?" onConfirm={() => handleDelete(record.id)} okText="Да" okType="danger" cancelText="Нет">
+                            <Button type="text" danger icon={<DeleteOutlined />} />
                         </Popconfirm>
                     </Tooltip>
                 </Space>
             ),
-        },
+        }
     ];
 
     return (
         <div>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24}}>
-                <Title level={2} style={{margin: 0, color: 'var(--hse-blue)'}}>Доступные страницы</Title>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined/>}
-                    size="large"
-                    onClick={() => {
-                        setEditPage({title: null, type: 'BASIC', slug: null});
-                        setIsModalOpen(true);
+            <Title level={2} style={{ color: 'var(--hse-blue)', fontFamily: 'HSE Sans' }}>Каталог страниц</Title>
+            <div>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
+                    <Alert
+                        title="Здесь хранятся все ваши черновики и подготовленные материалы"
+                        type="info" showIcon
+                    />
+                    <Button type="create" icon={<PlusOutlined/>} onClick={() => setIsModalOpen(true)}>
+                        Создать материал
+                    </Button>
+                </div>
+                <Table
+                    columns={columns}
+                    dataSource={pages}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{pageSize: 12}}
+                    locale={{
+                        triggerDesc: 'Нажмите для сортировки по убыванию',
+                        triggerAsc: 'Нажмите для сортировки по возрастанию',
+                        cancelSort: 'Нажмите, чтобы отменить сортировку'
                     }}
-                >
-                    Создать страницу
-                </Button>
+                />
             </div>
 
-            <Table
-                columns={columns}
-                dataSource={pages}
-                rowKey="id"
-                loading={loading}
-                locale={{
-                    triggerDesc: 'Отсортировать по убыванию',
-                    triggerAsc: 'Отсортировать по возрастанию',
-                    cancelSort: 'Сбросить сортировку'
-                }}
-                pagination={{pageSize: 10}}
-            />
-
             <Modal
-                title="Создание новой страницы"
+                title="Создание нового материала"
                 open={isModalOpen}
                 onCancel={() => {
                     setIsModalOpen(false);
-                    setEditPage({title: null, type: 'BASIC', slug: null});
                     form.resetFields();
                 }}
                 onOk={() => form.submit()}
                 okText="Создать и перейти в редактор"
                 cancelText="Отмена"
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleCreate}
-                    initialValues={{title: null, type: 'BASIC', slug: null}}
-                >
+                <Form form={form} layout="vertical" onFinish={handleCreate} initialValues={{type: 'NEWS'}}>
                     <Form.Item name="type" label="Тип материала" rules={[{required: true}]}>
                         <Select>
-                            <Option value="BASIC">Основная страница (с постоянным адресом)</Option>
-                            <Option value="NEWS">Новость (попадет в ленту)</Option>
-                            <Option value="ANNOUNCEMENT">Анонс (с датами)</Option>
+                            <Option value="NEWS">Новость (Новостная лента)</Option>
+                            <Option value="ANNOUNCEMENT">Анонс (Мероприятия и события)</Option>
+                            <Option value="BASIC">Простая статическая страница</Option>
                         </Select>
                     </Form.Item>
-
-                    <Form.Item
-                        name="title"
-                        label="Заголовок"
-                        rules={[{required: true, message: 'Укажите заголовок страницы'}]}
-                    >
-                        <Input placeholder="Например: О платформе MLOps"/>
+                    <Form.Item name="title" label="Заголовок страницы" rules={[{ required: true, message: 'Укажите заголовок страницы' }]}>
+                        <Input placeholder="Например: О платформе MLOps" />
                     </Form.Item>
-
                     {typeValue === 'BASIC' && (
-                        <Form.Item
-                            name="slug"
-                            label="Адрес страницы"
-                            rules={[{required: true, message: 'Укажите адрес страницы'}]}
-                            helper="Латинские буквы, например: about_us"
-                        >
-                            <Space.Compact block className="input-group">
-                                <Input defaultValue="hse.ru/" style={{width: '15%'}} readOnly/>
-                                <Input placeholder="Например: about_us" style={{width: '85%'}}/>
-                            </Space.Compact>
-                        </Form.Item>
-                    )}
-                </Form>
-            </Modal>
-            <Modal
-                title="Редактирование страницы"
-                open={isEditModalOpen}
-                onCancel={() => {
-                    setIsEditModalOpen(false);
-                    setEditPage({});
-                    form.resetFields();
-                }}
-                onOk={() => form.submit()}
-                okText="Сохранить и перейти в редактор"
-                cancelText="Отмена"
-            >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleEdit}
-                    initialValues={{
-                        type: editPage?.type,
-                        title: editPage?.title,
-                        slug: editPage?.slug
-                    }}
-                >
-                    <Form.Item
-                        name="title"
-                        label="Заголовок"
-                        rules={[{required: true, message: 'Укажите заголовок страницы'}]}
-                    >
-                        <Input placeholder="Например: О платформе MLOps"/>
-                    </Form.Item>
-
-                    {editPage?.type === 'BASIC' && (
-                        <Form.Item
-                            name="slug"
-                            label="Адрес страницы"
-                            rules={[{required: true, message: 'Укажите адрес страницы'}]}
-                        >
-                            <Input placeholder="Например: about_us"/>
+                        <Form.Item name="slug" label="Путь страницы" rules={[{ required: true, message: 'Укажите путь страницы' }]}>
+                            <Input addonBefore="hse.ru/" placeholder="about_us" />
                         </Form.Item>
                     )}
                 </Form>

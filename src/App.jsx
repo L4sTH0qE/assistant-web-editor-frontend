@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
 import {Navigate, Route, Routes} from 'react-router-dom';
 import {useDispatch, useSelector} from 'react-redux';
-import {ConfigProvider} from 'antd'; // Провайдер темы
+import {ConfigProvider} from 'antd';
+import AnalyticsPage from './pages/AnalyticsPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import EditorPage from './pages/EditorPage';
@@ -38,6 +39,10 @@ function App() {
         >
             <Routes>
                 <Route path="/login" element={!isAuthenticated ? <LoginPage/> : <Navigate to="/"/>}/>
+
+                <Route path="/analytics" element={isAuthenticated ? <MainLayout/> : <Navigate to="/login"/>}>
+                    <Route index element={<AnalyticsPage/>}/>
+                </Route>
 
                 <Route path="/" element={isAuthenticated ? <MainLayout/> : <Navigate to="/login"/>}>
                     <Route index element={<DashboardPage/>}/>

@@ -68,7 +68,6 @@ export const CanvasItem = ({block}) => {
                         <Button
                             type="primary"
                             danger
-                            shape="circle"
                             icon={<DeleteOutlined/>}
                             onClick={handleDelete}
                             onPointerDown={(e) => e.stopPropagation()}

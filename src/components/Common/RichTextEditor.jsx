@@ -1,3 +1,5 @@
+import api from '../../utils/api';
+import {Button, Divider, Input, message, Select, Space, Tooltip} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import {EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor} from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
@@ -5,7 +7,6 @@ import {Underline} from '@tiptap/extension-underline';
 import {Link} from '@tiptap/extension-link';
 import {Image} from '@tiptap/extension-image';
 import Heading from '@tiptap/extension-heading';
-import {Button, Divider, Input, Select, Space, Tooltip} from 'antd';
 import {
     BoldOutlined,
     DisconnectOutlined,
@@ -23,7 +24,6 @@ import {
 } from '@ant-design/icons';
 
 
-// --- Компонент ввода якоря ---
 const AnchorInput = ({editor}) => {
     const headingAttrs = editor.getAttributes('heading');
     const [localValue, setLocalValue] = useState(headingAttrs.id || '');
@@ -47,7 +47,7 @@ const AnchorInput = ({editor}) => {
     };
 
     return (
-        <Tooltip title="Название якоря (id)">
+        <Tooltip title="Название якоря">
             <Input
                 id="anchor-input-field"
                 prefix={<NumberOutlined style={{color: 'var(--hse-gray)'}}/>}
@@ -77,15 +77,14 @@ const ImageNodeView = ({node}) => {
                     position: 'relative',
                 }}
             />
-            {/* Отображаем название файла серым цветом */}
             {title && (
                 <span style={{
                     display: 'block',
                     marginTop: '4px',
-                    color: '#999',
-                    fontSize: '11px',
-                    textAlign: 'center',
+                    color: 'var(--hse-gray)',
+                    fontSize: '12px',
                     fontFamily: 'HSE Sans',
+                    fontStyle: 'italic',
                     lineHeight: '1.2',
                     maxWidth: width ? `${width}px` : '100%',
                     wordWrap: 'break-word'
@@ -97,7 +96,6 @@ const ImageNodeView = ({node}) => {
     );
 };
 
-// --- Расширение IMG с title и размерами ---
 const ResizableImage = Image.extend({
     addAttributes() {
         return {
@@ -130,7 +128,6 @@ const ResizableImage = Image.extend({
 
         const styles = [];
         styles.push(`position: relative`);
-        styles.push('display: inline-block');
         if (width) {
             styles.push(`width: ${width}px`);
         }
@@ -173,13 +170,32 @@ const MenuBar = ({editor}) => {
     const fileInputRef = useRef(null);
     if (!editor) return null;
 
+    // ОБНОВЛЕННАЯ ЛОГИКА РАБОТЫ СО ССЫЛКАМИ
     const setLink = () => {
-        if (editor.isActive('link')) {
-            editor.chain().focus().unsetLink().run();
+        // Если ссылка уже есть, получаем ее текущий URL, чтобы показать в prompt
+        const previousUrl = editor.getAttributes('link').href;
+        const promptText = previousUrl ? 'Изменить URL страницы или Якорь:' : 'Введите URL страницы или Якорь (например, #anchor):';
+
+        const url = window.prompt(promptText, previousUrl || '');
+
+        // Если пользователь нажал "Отмена"
+        if (url === null) {
             return;
         }
-        const url = window.prompt('Введите URL страницы или Якорь (например, #anchor):');
-        if (url) editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
+
+        // Если пользователь стер адрес и нажал ОК - удаляем ссылку
+        if (url === '') {
+            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+            return;
+        }
+
+        // Устанавливаем или обновляем ссылку (выделяем весь текст ссылки и применяем новый URL)
+        editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
+    };
+
+    // ФУНКЦИЯ ЯВНОГО УДАЛЕНИЯ ССЫЛКИ
+    const removeLink = () => {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run();
     };
 
     const addFilePlaceholder = () => {
@@ -191,44 +207,70 @@ const MenuBar = ({editor}) => {
         }
     };
 
-    const handleImageSelect = (e) => {
+    const handleImageSelect = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const objectUrl = URL.createObjectURL(file);
-
         const fileName = file.name.split('.')[0];
         const altText = window.prompt('Описание картинки (Alt/Title):', fileName);
-        const userWidth = window.prompt('Ширина (px)?', '600');
+        const userWidth = window.prompt('Ширина (px)? Оставьте пустым для авто', '');
         const userLeft = window.prompt('Отступ слева (px)?', '0');
         const userTop = window.prompt('Отступ сверху (px)?', '0');
 
-        const img = new window.Image();
-        img.src = objectUrl;
+        const hideLoading = message.loading('Загрузка изображения...', 0);
 
-        img.onload = () => {
-            let finalWidth = parseFloat(userWidth) || img.naturalWidth;
-            let finalHeight = (finalWidth / img.naturalWidth) * img.naturalHeight;
-            finalHeight = Math.round(finalHeight * 1000) / 1000;
-            let finalLeft = parseFloat(userLeft) || 0;
-            let finalTop = parseFloat(userTop) || 0;
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
 
-            console.error("handleImageSelect");
-            editor.chain().focus().setImage({
-                src: objectUrl,
-                alt: altText || '',
-                title: altText || '',
-                width: finalWidth,
-                height: finalHeight,
-                left: finalLeft,
-                top: finalTop
-            }).run();
-        };
+            const {data} = await api.post('/files/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            const permanentUrl = data.url;
+            const img = new window.Image();
+            img.src = permanentUrl;
+
+            img.onload = () => {
+                let finalWidth = parseFloat(userWidth) || img.naturalWidth;
+                let finalHeight = (finalWidth / img.naturalWidth) * img.naturalHeight;
+                finalHeight = Math.round(finalHeight * 1000) / 1000;
+
+                let finalLeft = parseFloat(userLeft) || 0;
+                let finalTop = parseFloat(userTop) || 0;
+
+                editor.chain().focus().setImage({
+                    src: permanentUrl,
+                    alt: altText || '',
+                    title: altText || '',
+                    width: finalWidth,
+                    height: finalHeight,
+                    left: finalLeft,
+                    top: finalTop
+                }).run();
+
+                hideLoading();
+                message.success('Изображение загружено');
+            };
+
+            img.onerror = () => {
+                hideLoading();
+                message.error('Ошибка обработки изображения');
+            }
+
+        } catch (error) {
+            hideLoading();
+            console.error(error);
+            message.error('Ошибка загрузки на сервер');
+        }
 
         e.target.value = '';
     };
 
     const isHeading = editor.isActive('heading');
+    const isLinkActive = editor.isActive('link');
 
     return (
         <Space wrap style={{
@@ -241,24 +283,24 @@ const MenuBar = ({editor}) => {
         }}>
             <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*"
                    onChange={handleImageSelect}/>
-
-            <Select
-                value={isHeading ? editor.getAttributes('heading').level : 'p'}
-                style={{width: 130, fontFamily: "HSE Sans"}}
-                onChange={(value) => {
-                    if (value === 'p') editor.chain().focus().setParagraph().run();
-                    else editor.chain().focus().setHeading({level: value}).run();
-                }}
-                options={[
-                    {value: 'p', label: 'Обычный'},
-                    {value: 2, label: 'Заголовок H2'},
-                    {value: 3, label: 'Заголовок H3'},
-                    {value: 4, label: 'Заголовок H4'},
-                    {value: 5, label: 'Заголовок H5'},
-                    {value: 6, label: 'Заголовок H6'},
-                ]}
-            />
-
+            <Tooltip title="Абзац (Стиль)">
+                <Select
+                    value={isHeading ? editor.getAttributes('heading').level : 'p'}
+                    style={{width: 140, fontFamily: "HSE Sans"}}
+                    onChange={(value) => {
+                        if (value === 'p') editor.chain().focus().setParagraph().run();
+                        else editor.chain().focus().setHeading({level: value}).run();
+                    }}
+                    options={[
+                        {value: 'p', label: 'Обычный текст'},
+                        {value: 2, label: 'Заголовок H2'},
+                        {value: 3, label: 'Заголовок H3'},
+                        {value: 4, label: 'Заголовок H4'},
+                        {value: 5, label: 'Заголовок H5'},
+                        {value: 6, label: 'Заголовок H6'},
+                    ]}
+                />
+            </Tooltip>
             {isHeading && <AnchorInput editor={editor}/>}
 
             <Divider orientation="vertical"/>
@@ -277,28 +319,45 @@ const MenuBar = ({editor}) => {
                                                  onClick={() => editor.chain().focus().toggleStrike().run()}/></Tooltip>
 
             <Divider orientation="vertical"/>
-            <Button size="small" icon={<LinkOutlined/>} type={editor.isActive('link') ? 'primary' : 'text'}
-                    onClick={setLink}/>
-            {editor.isActive('link') && (
-                <Tooltip title="Убрать ссылку">
-                    <Button size="small" icon={<DisconnectOutlined/>}
-                            onClick={() => editor.chain().focus().unsetLink().run()}/>
-                </Tooltip>
-            )}
-            <Button size="small" icon={<PictureOutlined/>} onClick={() => fileInputRef.current?.click()}/>
-            <Button size="small" icon={<FileTextOutlined/>} onClick={addFilePlaceholder}/>
+
+            <Tooltip title={isLinkActive ? "Изменить ссылку" : "Вставить ссылку"}>
+                <Button size="small" icon={<LinkOutlined/>} type={isLinkActive ? 'primary' : 'text'} onClick={setLink}/>
+            </Tooltip>
+
+            <Tooltip title="Удалить ссылку">
+                <Button size="small" icon={<DisconnectOutlined/>} type="text"
+                        
+                        onClick={removeLink}/>
+            </Tooltip>
+
+            <Tooltip title="Вставить изображение">
+                <Button size="small" icon={<PictureOutlined/>} onClick={() => fileInputRef.current?.click()}/>
+            </Tooltip>
+            <Tooltip title="Загрузить файл">
+                <Button size="small" icon={<FileTextOutlined/>} onClick={addFilePlaceholder}/>
+            </Tooltip>
 
             <Divider orientation="vertical"/>
-            <Button size="small" icon={<UnorderedListOutlined/>}
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}/>
-            <Button size="small" icon={<OrderedListOutlined/>}
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}/>
+
+            <Tooltip title="Маркированный список">
+                <Button size="small" icon={<UnorderedListOutlined/>}
+                        onClick={() => editor.chain().focus().toggleBulletList().run()}/>
+            </Tooltip>
+            <Tooltip title="Нумерованный список">
+                <Button size="small" icon={<OrderedListOutlined/>}
+                        onClick={() => editor.chain().focus().toggleOrderedList().run()}/>
+            </Tooltip>
 
             <Divider orientation="vertical"/>
-            <Button size="small" icon={<UndoOutlined/>} onClick={() => editor.chain().focus().undo().run()}
-                    disabled={!editor.can().undo()}/>
-            <Button size="small" icon={<RedoOutlined/>} onClick={() => editor.chain().focus().redo().run()}
-                    disabled={!editor.can().redo()}/>
+
+            <Tooltip title="Отменить">
+                <Button size="small" icon={<UndoOutlined/>} onClick={() => editor.chain().focus().undo().run()}
+                        disabled={!editor.can().undo()}/>
+            </Tooltip>
+            <Tooltip title="Повторить">
+                <Button size="small" icon={<RedoOutlined/>} onClick={() => editor.chain().focus().redo().run()}
+                        disabled={!editor.can().redo()}/>
+            </Tooltip>
         </Space>
     );
 };
@@ -357,5 +416,3 @@ export const RichTextEditor = ({value, onChange}) => {
         </div>
     );
 };
-
-
