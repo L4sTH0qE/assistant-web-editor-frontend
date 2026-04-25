@@ -95,19 +95,58 @@ export const TaxonomyModal = ({ isOpen, onClose }) => {
                 <Tabs.TabPane tab="Рубрики" key="rubric">
                     <Text type="secondary" style={{display: 'block', mb: 16}}>Ограниченный набор рубрик для фильтрации новостей (Например: "Наука", "Студентам")</Text>
                     {renderForm('Название рубрики')}
-                    <Table columns={columns} dataSource={taxonomy.rubrics || []} rowKey="id" loading={loading} pagination={{ pageSize: 5 }} size="small" />
+                    <Table
+                        columns={columns}
+                        dataSource={taxonomy.rubrics || []}
+                        rowKey="id"
+                        loading={loading}
+                        pagination={{ pageSize: 5 }}
+                        size="small"
+                        locale={{
+                            emptyText: 'Справочник рубрик пуст',
+                            triggerDesc: 'Нажмите для сортировки по убыванию',
+                            triggerAsc: 'Нажмите для сортировки по возрастанию',
+                            cancelSort: 'Нажмите, чтобы отменить сортировку'
+                        }}
+                    />
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab="Теги" key="tag">
                     <Text type="secondary" style={{display: 'block', mb: 16}}>Внутренние теги для агрегации контента (Например: "Олимпиада", "Физтех")</Text>
                     {renderForm('Название тега')}
-                    <Table columns={columns} dataSource={taxonomy.tags || []} rowKey="id" loading={loading} pagination={{ pageSize: 5 }} size="small" />
+                    <Table
+                        columns={columns}
+                        dataSource={taxonomy.tags || []}
+                        rowKey="id"
+                        loading={loading}
+                        pagination={{ pageSize: 5 }}
+                        size="small"
+                        locale={{
+                            emptyText: 'Справочник тегов пуст',
+                            triggerDesc: 'Нажмите для сортировки по убыванию',
+                            triggerAsc: 'Нажмите для сортировки по возрастанию',
+                            cancelSort: 'Нажмите, чтобы отменить сортировку'
+                        }}
+                    />
                 </Tabs.TabPane>
 
                 <Tabs.TabPane tab="Ключевые слова" key="keyword">
                     <Text type="secondary" style={{display: 'block', mb: 16}}>SEO-слова для поиска</Text>
                     {renderForm('Ключевое слово')}
-                    <Table columns={columns} dataSource={taxonomy.keywords || []} rowKey="id" loading={loading} pagination={{ pageSize: 5 }} size="small" />
+                    <Table
+                        columns={columns}
+                        dataSource={taxonomy.keywords || []}
+                        rowKey="id"
+                        loading={loading}
+                        pagination={{ pageSize: 5 }} 
+                        size="small"
+                        locale={{
+                            emptyText: 'Справочник ключевых слов пуст',
+                            triggerDesc: 'Нажмите для сортировки по убыванию',
+                            triggerAsc: 'Нажмите для сортировки по возрастанию',
+                            cancelSort: 'Нажмите, чтобы отменить сортировку'
+                        }}
+                    />
                 </Tabs.TabPane>
             </Tabs>
         </Modal>

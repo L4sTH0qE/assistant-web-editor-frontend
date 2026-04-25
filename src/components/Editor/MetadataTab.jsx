@@ -130,7 +130,7 @@ export const MetadataTab = () => {
 
             <Form.Item label="Ссылка на публикацию (URL)" name="externalUrl"
                        tooltip="Для проверки синхронизации с сайтом портала">
-                <Input prefix="https://" placeholder="hse.ru/news/..." />
+                <Input placeholder="https://hse.ru/news/..." />
             </Form.Item>
 
             <Divider />

@@ -1,5 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {
+    Alert,
     Button,
     Dropdown,
     Divider,
@@ -12,7 +13,8 @@ import {
     Drawer,
     Badge,
     Tooltip,
-    Input
+    Input,
+    Tag
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -23,7 +25,8 @@ import {
     SyncOutlined,
     EditOutlined,
     LoadingOutlined,
-    DownOutlined
+    DownOutlined,
+    WarningOutlined
 } from '@ant-design/icons';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useDispatch, useSelector} from 'react-redux';
@@ -35,7 +38,7 @@ import {MetadataTab} from '../components/Editor/MetadataTab';
 import {TransferModal} from '../components/Editor/TransferModal';
 
 import api from '../utils/api';
-import {setIsSaved, setPageData, setTitle} from '../store/editorSlice';
+import {setIsSaved, setPageData, setTitle, setSyncStatus} from '../store/editorSlice';
 
 const {Sider, Content, Header} = Layout;
 const {Text} = Typography;
@@ -52,6 +55,9 @@ const EditorPage = () => {
 
     const [isMetadataOpen, setIsMetadataOpen] = useState(false);
     const [isTransferOpen, setIsTransferOpen] = useState(false);
+
+    const [isSyncReportOpen, setIsSyncReportOpen] = useState(false);
+    const [syncReportData, setSyncReportData] = useState(null);
 
     useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -78,15 +84,25 @@ const EditorPage = () => {
     };
 
     const handleCheckSync = async () => {
+        if (!metadata?.externalUrl) {
+            message.warning('Сначала укажите URL в настройках метаданных!');
+            setIsMetadataOpen(true);
+            return;
+        }
+
+        setLoading(true);
         try {
-            const {data} = await api.post(`/pages/${id}/check-sync`);
-            if (data.status === 'SYNCED') {
-                message.success('Контент полностью совпадает с опубликованной версией');
-            } else {
-                message.warning('Обнаружены расхождения с сайтом!');
-            }
+            const { data } = await api.post(`/pages/${id}/check-sync`);
+            dispatch(setSyncStatus(data.status));
+            
+            setSyncReportData(data);
+            setIsSyncReportOpen(true);
+
         } catch (e) {
-            message.error('Ошибка проверки синхронизации. Проверьте ссылку в настройках.');
+            message.error('Ошибка проверки синхронизации. Проверьте доступность ссылки.');
+            dispatch(setSyncStatus('DESYNCED'));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -280,9 +296,21 @@ const EditorPage = () => {
                 height: 64
             }}>
                 <Space align="center" style={{display: 'flex'}}>
+                    {/* КНОПКА "НАЗАД" */}
                     <Button style={{minWidth: '120px'}} icon={<ArrowLeftOutlined/>} onClick={handleBackClick}>Назад</Button>
+
+                    {/* ИНДИКАТОР СТАТУСА СИНХРОНИЗАЦИИ */}
+                    <Tag
+                        color={syncStatus === 'SYNCED' ? 'success' : syncStatus === 'DESYNCED' ? 'error' : 'default'}
+                        icon={syncStatus === 'SYNCED' ? <SyncOutlined spin={loading} /> : <WarningOutlined />}
+                        style={{ marginLeft: 10, fontFamily: 'HSE Sans' }}
+                    >
+                        {syncStatus === 'SYNCED' ? 'Синхронизировано' : syncStatus === 'DESYNCED' ? 'Не синхронизировано' : 'Черновик'}
+                    </Tag>
+
                     <Divider orientation="vertical"/>
 
+                    {/* НАЗВАНИЕ СТРАНИЦЫ И СТАТУС СОХРАНЕНИЯ ИЗМЕНЕНИЙ */}
                     <Badge dot={!isSaved} offset={[5, 0]} style={{display: 'flex', alignItems: 'center'}}>
                         <CustomTitle title={title} setTitle={setTitle} dispatch={dispatch} width={300}/>
                     </Badge>
@@ -311,6 +339,7 @@ const EditorPage = () => {
                 </Space>
             </Header>
 
+            {/* ОСНОВНАЯ ЧАСТЬ СТРАНИЦЫ РЕДАКТОРА */}
             <Layout>
                 <Sider width='15vw' theme="light" style={{borderRight: '1px solid #eee'}}><Sidebar/></Sider>
                 <Content style={{overflowY: 'auto', padding: '24px', background: 'var(--hse-gray-accent)'}}><Canvas
@@ -318,15 +347,70 @@ const EditorPage = () => {
                 <Sider width='25vw' theme="light" style={{borderLeft: '1px solid #eee'}}><PropertiesPanel/></Sider>
             </Layout>
 
-            {/* ВЫЕЗЖАЮЩАЯ ПАНЕЛЬ МЕТАДАННЫХ */}
+            {/* ПАНЕЛЬ МЕТАДАННЫХ */}
             <Drawer
                 title={`Метаданные: ${type === 'NEWS' ? 'Новость' : type === 'ANNOUNCEMENT' ? 'Анонс' : 'Простая страница'}`}
                 placement="right" onClose={() => setIsMetadataOpen(false)} open={isMetadataOpen} size={450}>
                 <MetadataTab/>
             </Drawer>
 
-            {/* МАСТЕР ПЕРЕНОСА (ОБЪЕДИНЕННЫЙ) */}
+            {/* МАСТЕР ЭКСПОРТА СТРАНИЦЫ */}
             <TransferModal isOpen={isTransferOpen} onClose={() => setIsTransferOpen(false)}/>
+
+            {/* МОДАЛЬНОЕ ОКНО ОТЧЕТА О СИНХРОНИЗАЦИИ */}
+            <Modal
+                title={<Typography.Title level={4} style={{fontFamily: 'HSE Sans', margin: 0}}>Отчет о синхронизации контента</Typography.Title>}
+                open={isSyncReportOpen}
+                onCancel={() => setIsSyncReportOpen(false)}
+                footer={[<Button key="close" type="primary" onClick={() => setIsSyncReportOpen(false)}>Закрыть</Button>]}
+                width={700}
+            >
+                {syncReportData && (
+                    <div style={{ marginTop: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+                            <Text strong style={{ fontSize: 16 }}>Статус:</Text>
+                            <Badge
+                                status={syncReportData.status === 'SYNCED' ? 'success' : 'error'}
+                                text={syncReportData.status === 'SYNCED' ? 'Синхронизировано' : 'Обнаружены расхождения'}
+                                style={{ fontSize: 16 }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: 20 }}>
+                            <Text strong>Процент совпадения текста (Алгоритм Жаккара): </Text>
+                            <Text style={{ color: syncReportData.similarityPercent >= 85 ? '#52c41a' : '#cf1322', fontWeight: 'bold' }}>
+                                {syncReportData.similarityPercent}%
+                            </Text>
+                        </div>
+
+                        {!syncReportData.titleMatch && (
+                            <Alert title="Внимание: Заголовок страницы на сайте отличается от черновика!" type="warning" showIcon style={{marginBottom: 16}} />
+                        )}
+
+                        {syncReportData.missingOnWebsite?.length > 0 && (
+                            <div style={{ marginBottom: 16 }}>
+                                <Text strong style={{ color: '#d4380d' }}>Текст ЕСТЬ в черновике, но ОТСУТСТВУЕТ на сайте (Не выгружен):</Text>
+                                <ul style={{ background: '#fff1f0', padding: '10px 10px 10px 25px', borderRadius: 4, marginTop: 8 }}>
+                                    {syncReportData.missingOnWebsite.map((text, i) => <li key={i} style={{marginBottom: 4, fontSize: 13}}>{text}</li>)}
+                                </ul>
+                            </div>
+                        )}
+
+                        {syncReportData.extraOnWebsite?.length > 0 && (
+                            <div>
+                                <Text strong style={{ color: '#0958d9' }}>Текст ЕСТЬ на сайте, но ОТСУТСТВУЕТ в черновике (Системные приписки или правки на сайте):</Text>
+                                <ul style={{ background: '#e6f4ff', padding: '10px 10px 10px 25px', borderRadius: 4, marginTop: 8 }}>
+                                    {syncReportData.extraOnWebsite.map((text, i) => <li key={i} style={{marginBottom: 4, fontSize: 13}}>{text}</li>)}
+                                </ul>
+                            </div>
+                        )}
+
+                        {syncReportData.status === 'SYNCED' && syncReportData.extraOnWebsite?.length === 0 && syncReportData.missingOnWebsite?.length === 0 && (
+                            <Alert message="Тексты идентичны. Расхождений не найдено." type="success" showIcon />
+                        )}
+                    </div>
+                )}
+            </Modal>
         </Layout>
     );
 };

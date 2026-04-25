@@ -85,6 +85,9 @@ const editorSlice = createSlice({
         selectBlock: (state, action) => {
             state.selectedBlockId = action.payload;
         },
+        setSyncStatus: (state, action) => {
+            state.syncStatus = action.payload;
+        },
     },
 });
 
@@ -98,6 +101,7 @@ export const {
     updateBlockProps,
     removeBlock,
     reorderBlocks,
-    selectBlock
+    selectBlock,
+    setSyncStatus
 } = editorSlice.actions;
 export default editorSlice.reducer;
