@@ -11,11 +11,11 @@ export const TransferModal = ({isOpen, onClose}) => {
     const [checkedSteps, setCheckedSteps] = useState([]);
     const [processedBlocks, setProcessedBlocks] = useState([]);
 
-    // Логика очистки HTML
+    // Логика очистки HTML перед выдачей кода редактору
     const processHtmlForExport = (html) => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-
+        
         const links = doc.querySelectorAll('a');
         links.forEach(link => {
             if (link.hasAttribute('name') || link.classList.contains('hse-file-stub')) return;
@@ -35,19 +35,30 @@ export const TransferModal = ({isOpen, onClose}) => {
             }
         });
 
+        const tables = doc.querySelectorAll('table, th, td, tr, tbody, thead');
+        tables.forEach(el => {
+            while (el.attributes.length > 0) {
+                if (el.attributes[0].name === 'colspan' || el.attributes[0].name === 'rowspan') {
+                    break;
+                }
+                el.removeAttribute(el.attributes[0].name);
+            }
+            if (el.tagName === 'TABLE') {
+                el.setAttribute('border', '1');
+            }
+        });
+
         const images = doc.querySelectorAll('img');
         images.forEach(img => {
             const w = img.style.width || img.getAttribute('width') || 'auto';
             const h = img.style.height || img.getAttribute('height') || 'auto';
             const title = img.getAttribute('title') || img.getAttribute('alt') || 'Файл';
 
-            if (img.src && (img.src.startsWith('blob:') || img.src.startsWith('data:'))) {
-                const placeholder = doc.createElement('p');
-                placeholder.style.color = '#d32f2f';
-                placeholder.style.fontWeight = 'bold';
-                placeholder.innerHTML = `[ОПТИМИЗИРОВАТЬ И ПРИКРЕПИТЬ ФОТО: "${title}" | W: ${w} | H: ${h} ]`;
-                img.replaceWith(placeholder);
-            }
+            const placeholder = doc.createElement('p');
+            placeholder.style.color = '#d32f2f';
+            placeholder.style.fontWeight = 'bold';
+            placeholder.innerHTML = `[ОПТИМИЗИРОВАТЬ И ПРИКРЕПИТЬ ФОТО: "${title}" | W: ${w} | H: ${h} ]`;
+            img.replaceWith(placeholder);
         });
 
         const fileStubs = doc.querySelectorAll('a.hse-file-stub');

@@ -70,8 +70,6 @@ const renderFields = (type) => {
                     className="custom-label-font"
                     label="Содержимое"
                     name="content"
-                    valuePropName="value"
-                    getValueFromEvent={(val) => val}
                 >
                     <RichTextEditor/>
                 </Form.Item>

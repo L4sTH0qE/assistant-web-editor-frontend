@@ -17,7 +17,8 @@ const initialState = {
     },
     syncStatus: 'DRAFT', // DRAFT, SYNCED, DESYNCED
     isSaved: true,
-    selectedBlockId: null
+    selectedBlockId: null,
+    slug: ''
 };
 
 
@@ -33,12 +34,17 @@ const editorSlice = createSlice({
             state.metadata = action.payload.metadata || initialState.metadata;
             state.syncStatus = action.payload.syncStatus;
             state.isSaved = true;
+            state.slug = action.payload.slug;
         },
         setIsSaved: (state, action) => {
             state.isSaved = true;
         },
         setTitle: (state, action) => {
             state.title = action.payload;
+            state.isSaved = false;
+        },
+        setSlug: (state, action) => {
+            state.slug = action.payload;
             state.isSaved = false;
         },
         addBlock: (state, action) => {
@@ -95,6 +101,7 @@ export const {
     setPageData,
     setIsSaved,
     setTitle,
+    setSlug,
     addBlock,
     updateMetadata,
     updateBlocks,

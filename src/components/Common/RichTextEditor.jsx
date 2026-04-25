@@ -1,26 +1,34 @@
 import api from '../../utils/api';
-import {Button, Divider, Input, message, Select, Space, Tooltip} from 'antd';
+import {Button, Divider, Form, Input, InputNumber, message, Modal, Select, Space, Tooltip, Typography} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import {EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor} from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
 import {Underline} from '@tiptap/extension-underline';
 import {Link} from '@tiptap/extension-link';
 import {Image} from '@tiptap/extension-image';
-import Heading from '@tiptap/extension-heading';
+import {Heading} from '@tiptap/extension-heading';
+import {Table} from '@tiptap/extension-table';
+import {TableRow} from '@tiptap/extension-table-row';
+import {TableCell} from '@tiptap/extension-table-cell';
+import {TableHeader} from '@tiptap/extension-table-header';
+
 import {
     BoldOutlined,
+    DeleteColumnOutlined,
+    DeleteRowOutlined,
     DisconnectOutlined,
     FileTextOutlined,
+    InsertRowBelowOutlined,
+    InsertRowRightOutlined,
     ItalicOutlined,
     LinkOutlined,
     NumberOutlined,
-    OrderedListOutlined,
     PictureOutlined,
     RedoOutlined,
     StrikethroughOutlined,
+    TableOutlined,
     UnderlineOutlined,
-    UndoOutlined,
-    UnorderedListOutlined
+    UndoOutlined
 } from '@ant-design/icons';
 
 
@@ -42,10 +50,6 @@ const AnchorInput = ({editor}) => {
         }
     };
 
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') e.target.blur();
-    };
-
     return (
         <Tooltip title="Название якоря">
             <Input
@@ -55,26 +59,47 @@ const AnchorInput = ({editor}) => {
                 value={localValue}
                 onChange={(e) => setLocalValue(e.target.value)}
                 onBlur={handleBlur}
-                onKeyDown={handleKeyDown}
+                onPressEnter={(e) => e.target.blur()}
                 style={{width: 120, fontSize: 13}}
             />
         </Tooltip>
     );
 };
 
-const ImageNodeView = ({node}) => {
-    const {src, alt, title, width, height, left, top} = node.attrs;
+
+const ImageNodeView = ({ node, selected, editor, getPos }) => {
+    const { src, alt, title, width, height } = node.attrs;
+
+    const handleClick = () => {
+        if (typeof getPos === 'function') {
+            editor.chain().focus().setNodeSelection(getPos()).run();
+        }
+    };
 
     return (
-        <NodeViewWrapper as="span" style={{display: 'inline-block', margin: '10px 0', verticalAlign: 'bottom'}}>
+        <NodeViewWrapper
+            as="span"
+            style={{
+                display: 'inline-block',
+                margin: '10px 0',
+                verticalAlign: 'bottom',
+                lineHeight: 0
+            }}
+        >
             <img
                 src={src}
                 alt={alt}
                 title={title}
+                data-drag-handle
+                onClick={handleClick}
                 style={{
-                    left: left,
-                    top: top,
-                    position: 'relative',
+                    width: width ? `${width}px` : 'auto',
+                    height: height ? `${height}px` : 'auto',
+                    maxWidth: '100%',
+                    outline: selected ? '2px solid #1677ff' : '1px solid #eee',
+                    outlineOffset: selected ? '-2px' : '-1px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
                 }}
             />
             {title && (
@@ -83,69 +108,32 @@ const ImageNodeView = ({node}) => {
                     marginTop: '4px',
                     color: 'var(--hse-gray)',
                     fontSize: '12px',
-                    fontFamily: 'HSE Sans',
                     fontStyle: 'italic',
-                    lineHeight: '1.2',
-                    maxWidth: width ? `${width}px` : '100%',
-                    wordWrap: 'break-word'
+                    lineHeight: 'normal'
                 }}>
-                    {title}
-                </span>
+                  {title}
+              </span>
             )}
         </NodeViewWrapper>
     );
 };
 
+
 const ResizableImage = Image.extend({
+    draggable: true,
+
     addAttributes() {
         return {
             ...this.parent?.(),
-            alt: {default: null},
-            title: {default: null},
-            width: {
-                default: null,
-                parseHTML: element => element.style.width.replace('px', '') || element.getAttribute('width'),
-            },
-            height: {
-                default: null,
-                parseHTML: element => element.style.height.replace('px', '') || element.getAttribute('height'),
-            },
-            left: {
-                default: null,
-                parseHTML: element => element.style.left || 0,
-            },
-            top: {
-                default: null,
-                parseHTML: element => element.style.top || 0,
-            },
+            alt: { default: null },
+            title: { default: null },
+            width: { default: null },
+            height: { default: null },
         };
     },
     addNodeView() {
         return ReactNodeViewRenderer(ImageNodeView);
     },
-    renderHTML({HTMLAttributes}) {
-        const {width, height, left, top, style, ...rest} = HTMLAttributes;
-
-        const styles = [];
-        styles.push(`position: relative`);
-        if (width) {
-            styles.push(`width: ${width}px`);
-        }
-        if (height) {
-            styles.push(`height: ${height}px`);
-        }
-        if (left) {
-            styles.push(`left: ${left}px`);
-        }
-        if (top) {
-            styles.push(`top: ${top}px`);
-        }
-
-        return ['img', {
-            ...rest,
-            style: styles.join('; '),
-        }];
-    }
 });
 
 
@@ -155,142 +143,126 @@ const CustomHeading = Heading.extend({
             ...this.parent?.(),
             id: {
                 default: null,
-                parseHTML: element => {
-                    const id = element.getAttribute('id');
-                    const anchor = element.querySelector('a[name]');
-                    return id || (anchor ? anchor.getAttribute('name') : null);
-                },
+                parseHTML: element => element.getAttribute('id') || element.querySelector('a[name]')?.getAttribute('name') || null,
                 renderHTML: attributes => attributes.id ? {id: attributes.id} : {},
             },
         };
     },
 });
 
+
+// --- ПАНЕЛЬ ИНСТРУМЕНТОВ ---
 const MenuBar = ({editor}) => {
     const fileInputRef = useRef(null);
+
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [isFileModalOpen, setIsFileModalOpen] = useState(false);
+    const [imageForm] = Form.useForm();
+    const [fileForm] = Form.useForm();
+    const [currentImageSrc, setCurrentImageSrc] = useState(null);
+
+    const [, setUpdateId] = useState(0);
+
+    useEffect(() => {
+        if (!editor) return;
+        const handleTransaction = () => setUpdateId(prev => prev + 1);
+        editor.on('transaction', handleTransaction);
+        return () => editor.off('transaction', handleTransaction);
+    }, [editor]);
+
     if (!editor) return null;
 
-    // ОБНОВЛЕННАЯ ЛОГИКА РАБОТЫ СО ССЫЛКАМИ
+    // --- ЛОГИКА ССЫЛОК ---
     const setLink = () => {
-        // Если ссылка уже есть, получаем ее текущий URL, чтобы показать в prompt
         const previousUrl = editor.getAttributes('link').href;
-        const promptText = previousUrl ? 'Изменить URL страницы или Якорь:' : 'Введите URL страницы или Якорь (например, #anchor):';
-
-        const url = window.prompt(promptText, previousUrl || '');
-
-        // Если пользователь нажал "Отмена"
-        if (url === null) {
-            return;
-        }
-
-        // Если пользователь стер адрес и нажал ОК - удаляем ссылку
+        const url = window.prompt(previousUrl ? 'Изменить URL:' : 'Введите URL или Якорь (#):', previousUrl || '');
+        if (url === null) return;
         if (url === '') {
             editor.chain().focus().extendMarkRange('link').unsetLink().run();
             return;
         }
-
-        // Устанавливаем или обновляем ссылку (выделяем весь текст ссылки и применяем новый URL)
         editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
     };
 
-    // ФУНКЦИЯ ЯВНОГО УДАЛЕНИЯ ССЫЛКИ
-    const removeLink = () => {
-        editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    // --- ЛОГИКА ФАЙЛОВ ---
+    const openFileModal = () => {
+        fileForm.setFieldsValue({fileName: 'Документ.pdf'});
+        setIsFileModalOpen(true);
     };
 
-    const addFilePlaceholder = () => {
-        const name = window.prompt('Введите название файла:', 'Документ.pdf');
-        if (name) {
-            editor.chain().focus()
-                .insertContent(`<a href="#" class="hse-file-stub">[${name}]</a> `)
-                .run();
+    const handleFileSubmit = (values) => {
+        editor.chain().focus().insertContent(`<a href="#" class="hse-file-stub">[${values.fileName}]</a> `).run();
+        setIsFileModalOpen(false);
+    };
+
+    // --- ЛОГИКА ИЗОБРАЖЕНИЙ ---
+    const handleImageIconClick = () => {
+        if (editor.isActive('image')) {
+            const attrs = editor.getAttributes('image');
+            setCurrentImageSrc(attrs.src);
+            imageForm.setFieldsValue({title: attrs.title, width: attrs.width, height: attrs.height});
+            setIsImageModalOpen(true);
+        } else {
+            fileInputRef.current?.click();
         }
     };
 
-    const handleImageSelect = async (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const fileName = file.name.split('.')[0];
-        const altText = window.prompt('Описание картинки (Alt/Title):', fileName);
-        const userWidth = window.prompt('Ширина (px)? Оставьте пустым для авто', '');
-        const userLeft = window.prompt('Отступ слева (px)?', '0');
-        const userTop = window.prompt('Отступ сверху (px)?', '0');
-
-        const hideLoading = message.loading('Загрузка изображения...', 0);
-
+        const hideLoading = message.loading('Загрузка изображения на сервер...', 0);
         try {
             const formData = new FormData();
             formData.append('file', file);
-
-            const {data} = await api.post('/files/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            const {data} = await api.post('/files/upload', formData, {headers: {'Content-Type': 'multipart/form-data'}});
 
             const permanentUrl = data.url;
-            const img = new window.Image();
-            img.src = permanentUrl;
-
-            img.onload = () => {
-                let finalWidth = parseFloat(userWidth) || img.naturalWidth;
-                let finalHeight = (finalWidth / img.naturalWidth) * img.naturalHeight;
-                finalHeight = Math.round(finalHeight * 1000) / 1000;
-
-                let finalLeft = parseFloat(userLeft) || 0;
-                let finalTop = parseFloat(userTop) || 0;
-
-                editor.chain().focus().setImage({
-                    src: permanentUrl,
-                    alt: altText || '',
-                    title: altText || '',
-                    width: finalWidth,
-                    height: finalHeight,
-                    left: finalLeft,
-                    top: finalTop
-                }).run();
-
-                hideLoading();
-                message.success('Изображение загружено');
-            };
-
-            img.onerror = () => {
-                hideLoading();
-                message.error('Ошибка обработки изображения');
-            }
-
+            setCurrentImageSrc(permanentUrl);
+            imageForm.setFieldsValue({title: file.name.split('.')[0], width: null, height: null});
+            setIsImageModalOpen(true);
         } catch (error) {
-            hideLoading();
             console.error(error);
             message.error('Ошибка загрузки на сервер');
+        } finally {
+            hideLoading();
+            e.target.value = '';
         }
+    };
 
-        e.target.value = '';
+    const handleImageSubmit = (values) => {
+        editor.chain().focus().setImage({
+            src: currentImageSrc,
+            alt: values.title || '',
+            title: values.title || '',
+            width: values.width || null,
+            height: values.height || null
+        }).run();
+        setIsImageModalOpen(false);
     };
 
     const isHeading = editor.isActive('heading');
     const isLinkActive = editor.isActive('link');
+    const isImageActive = editor.isActive('image');
 
     return (
-        <Space wrap style={{
-            padding: '8px',
-            borderBottom: '1px solid #eee',
-            background: '#fafafa',
-            width: '100%',
-            gap: 4,
-            alignItems: 'center'
-        }}>
-            <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*"
-                   onChange={handleImageSelect}/>
-            <Tooltip title="Абзац (Стиль)">
+        <>
+            <Space wrap style={{
+                padding: '8px',
+                borderBottom: '1px solid #eee',
+                background: '#fafafa',
+                width: '100%',
+                gap: 4
+            }}>
+
+                <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*"
+                       onChange={handleImageUpload}/>
+
+                {/* ЗАГОЛОВКИ */}
                 <Select
                     value={isHeading ? editor.getAttributes('heading').level : 'p'}
                     style={{width: 140, fontFamily: "HSE Sans"}}
-                    onChange={(value) => {
-                        if (value === 'p') editor.chain().focus().setParagraph().run();
-                        else editor.chain().focus().setHeading({level: value}).run();
-                    }}
+                    onChange={(val) => val === 'p' ? editor.chain().focus().setParagraph().run() : editor.chain().focus().setHeading({level: val}).run()}
                     options={[
                         {value: 'p', label: 'Обычный текст'},
                         {value: 2, label: 'Заголовок H2'},
@@ -300,67 +272,114 @@ const MenuBar = ({editor}) => {
                         {value: 6, label: 'Заголовок H6'},
                     ]}
                 />
-            </Tooltip>
-            {isHeading && <AnchorInput editor={editor}/>}
+                {isHeading && <AnchorInput editor={editor}/>}
 
-            <Divider orientation="vertical"/>
+                <Divider orientation="vertical"/>
 
-            <Tooltip title="Жирный"><Button size="small" icon={<BoldOutlined/>}
-                                            type={editor.isActive('bold') ? 'primary' : 'text'}
-                                            onClick={() => editor.chain().focus().toggleBold().run()}/></Tooltip>
-            <Tooltip title="Курсив"><Button size="small" icon={<ItalicOutlined/>}
-                                            type={editor.isActive('italic') ? 'primary' : 'text'}
-                                            onClick={() => editor.chain().focus().toggleItalic().run()}/></Tooltip>
-            <Tooltip title="Подчеркнутый"><Button size="small" icon={<UnderlineOutlined/>}
-                                                  type={editor.isActive('underline') ? 'primary' : 'text'}
-                                                  onClick={() => editor.chain().focus().toggleUnderline().run()}/></Tooltip>
-            <Tooltip title="Зачеркнутый"><Button size="small" icon={<StrikethroughOutlined/>}
-                                                 type={editor.isActive('strike') ? 'primary' : 'text'}
-                                                 onClick={() => editor.chain().focus().toggleStrike().run()}/></Tooltip>
+                {/* ТЕКСТ */}
+                <Tooltip title="Жирный"><Button size="small" icon={<BoldOutlined/>}
+                                                type={editor.isActive('bold') ? 'primary' : 'text'}
+                                                onClick={() => editor.chain().focus().toggleBold().run()}/></Tooltip>
+                <Tooltip title="Курсив"><Button size="small" icon={<ItalicOutlined/>}
+                                                type={editor.isActive('italic') ? 'primary' : 'text'}
+                                                onClick={() => editor.chain().focus().toggleItalic().run()}/></Tooltip>
+                <Tooltip title="Подчеркнутый"><Button size="small" icon={<UnderlineOutlined/>}
+                                                      type={editor.isActive('underline') ? 'primary' : 'text'}
+                                                      onClick={() => editor.chain().focus().toggleUnderline().run()}/></Tooltip>
+                <Tooltip title="Зачеркнутый"><Button size="small" icon={<StrikethroughOutlined/>}
+                                                     type={editor.isActive('strike') ? 'primary' : 'text'}
+                                                     onClick={() => editor.chain().focus().toggleStrike().run()}/></Tooltip>
 
-            <Divider orientation="vertical"/>
+                <Divider orientation="vertical"/>
 
-            <Tooltip title={isLinkActive ? "Изменить ссылку" : "Вставить ссылку"}>
-                <Button size="small" icon={<LinkOutlined/>} type={isLinkActive ? 'primary' : 'text'} onClick={setLink}/>
-            </Tooltip>
+                {/* ССЫЛКИ, КАРТИНКИ, ФАЙЛЫ */}
+                <Tooltip
+                    title={isLinkActive ? "Изменить ссылку" : "Вставить ссылку"}
+                    trigger="hover"
+                    key={`link-${isLinkActive}`}
+                >
+                    <Button size="small" icon={<LinkOutlined/>} type={isLinkActive ? 'primary' : 'text'}
+                            onClick={setLink}/>
+                </Tooltip>
+                <Tooltip title="Удалить ссылку">
+                    <Button size="small" icon={<DisconnectOutlined/>} type="text" disabled={!isLinkActive}
+                            onClick={() => editor.chain().focus().extendMarkRange('link').unsetLink().run()}/>
+                </Tooltip>
 
-            <Tooltip title="Удалить ссылку">
-                <Button size="small" icon={<DisconnectOutlined/>} type="text"
-                        
-                        onClick={removeLink}/>
-            </Tooltip>
+                <Tooltip
+                    title={isImageActive ? "Настройки изображения" : "Вставить изображение"}
+                    trigger="hover"
+                    key={`img-${isImageActive}`}
+                >
+                    <Button size="small" icon={<PictureOutlined/>} type={isImageActive ? 'primary' : 'text'}
+                            onClick={handleImageIconClick}/>
+                </Tooltip>
+                <Tooltip title="Добавить файл для скачивания">
+                    <Button size="small" icon={<FileTextOutlined/>} onClick={openFileModal}/>
+                </Tooltip>
 
-            <Tooltip title="Вставить изображение">
-                <Button size="small" icon={<PictureOutlined/>} onClick={() => fileInputRef.current?.click()}/>
-            </Tooltip>
-            <Tooltip title="Загрузить файл">
-                <Button size="small" icon={<FileTextOutlined/>} onClick={addFilePlaceholder}/>
-            </Tooltip>
+                <Divider orientation="vertical"/>
 
-            <Divider orientation="vertical"/>
+                {/* ТАБЛИЦЫ */}
+                <Tooltip title="Создать таблицу 3x3">
+                    <Button size="small" icon={<TableOutlined/>} onClick={() => editor.chain().focus().insertTable({
+                        rows: 3,
+                        cols: 3,
+                        withHeaderRow: true
+                    }).run()}/>
+                </Tooltip>
+                {editor.isActive('table') && (
+                    <>
+                        <Tooltip title="Добавить строку ниже"><Button size="small" icon={<InsertRowBelowOutlined/>}
+                                                                      onClick={() => editor.chain().focus().addRowAfter().run()}/></Tooltip>
+                        <Tooltip title="Добавить столбец справа"><Button size="small" icon={<InsertRowRightOutlined/>}
+                                                                         onClick={() => editor.chain().focus().addColumnAfter().run()}/></Tooltip>
+                        <Tooltip title="Удалить строку"><Button size="small" icon={<DeleteRowOutlined/>} danger
+                                                                onClick={() => editor.chain().focus().deleteRow().run()}/></Tooltip>
+                        <Tooltip title="Удалить столбец"><Button size="small" icon={<DeleteColumnOutlined/>} danger
+                                                                 onClick={() => editor.chain().focus().deleteColumn().run()}/></Tooltip>
+                    </>
+                )}
 
-            <Tooltip title="Маркированный список">
-                <Button size="small" icon={<UnorderedListOutlined/>}
-                        onClick={() => editor.chain().focus().toggleBulletList().run()}/>
-            </Tooltip>
-            <Tooltip title="Нумерованный список">
-                <Button size="small" icon={<OrderedListOutlined/>}
-                        onClick={() => editor.chain().focus().toggleOrderedList().run()}/>
-            </Tooltip>
+                <Divider orientation="vertical"/>
+                <Tooltip title="Отменить"><Button size="small" icon={<UndoOutlined/>}
+                                                  onClick={() => editor.chain().focus().undo().run()}
+                                                  disabled={!editor.can().undo()}/></Tooltip>
+                <Tooltip title="Повторить"><Button size="small" icon={<RedoOutlined/>}
+                                                   onClick={() => editor.chain().focus().redo().run()}
+                                                   disabled={!editor.can().redo()}/></Tooltip>
+            </Space>
 
-            <Divider orientation="vertical"/>
+            {/* МОДАЛКА ИЗОБРАЖЕНИЯ */}
+            <Modal title="Настройки изображения" open={isImageModalOpen} onOk={() => imageForm.submit()}
+                   onCancel={() => setIsImageModalOpen(false)} okText="Сохранить">
+                <Form form={imageForm} layout="vertical" onFinish={handleImageSubmit}>
+                    <Form.Item name="title" label="Описание (title/alt)"><Input
+                        placeholder="Введите описание для слабовидящих"/></Form.Item>
+                    <Space>
+                        <Form.Item name="width" label="Ширина (px)"><InputNumber placeholder="Авто" min={10}
+                                                                                 max={2000}/></Form.Item>
+                        <Form.Item name="height" label="Высота (px)"><InputNumber placeholder="Авто" min={10}
+                                                                                  max={2000}/></Form.Item>
+                    </Space>
+                </Form>
+            </Modal>
 
-            <Tooltip title="Отменить">
-                <Button size="small" icon={<UndoOutlined/>} onClick={() => editor.chain().focus().undo().run()}
-                        disabled={!editor.can().undo()}/>
-            </Tooltip>
-            <Tooltip title="Повторить">
-                <Button size="small" icon={<RedoOutlined/>} onClick={() => editor.chain().focus().redo().run()}
-                        disabled={!editor.can().redo()}/>
-            </Tooltip>
-        </Space>
+            {/* МОДАЛКА ФАЙЛА */}
+            <Modal title="Добавление файла" open={isFileModalOpen} onOk={() => fileForm.submit()}
+                   onCancel={() => setIsFileModalOpen(false)} okText="Добавить">
+                <Form form={fileForm} layout="vertical" onFinish={handleFileSubmit}>
+                    <Form.Item name="fileName" label="Отображаемое имя файла" rules={[{required: true}]}>
+                        <Input placeholder="Например: Регламент_2026.pdf"/>
+                    </Form.Item>
+                    <Typography.Text type="secondary">В редактор будет добавлена заглушка, которую при экспорте нужно
+                        будет заменить на реальный файл.</Typography.Text>
+                </Form>
+            </Modal>
+        </>
     );
 };
+
 
 export const RichTextEditor = ({value, onChange}) => {
     const editor = useEditor({
@@ -368,26 +387,26 @@ export const RichTextEditor = ({value, onChange}) => {
             StarterKit.configure({heading: false, blockquote: false, codeBlock: false}),
             CustomHeading.configure({levels: [2, 3, 4, 5, 6]}),
             Underline,
-            Link.configure({
-                openOnClick: false,
-                addTarget: false,
-                HTMLAttributes: {
-                    target: null,
-                    rel: null,
-                    class: null,
-                },
-            }),
+            Link.configure({openOnClick: false}),
             ResizableImage.configure({inline: false, allowBase64: true}),
+            Table.configure({resizable: true}),
+            TableRow,
+            TableHeader,
+            TableCell,
         ],
         content: value,
         editorProps: {
+            // ОЧИСТКА MS WORD И EXCEL
             transformPastedHTML(html) {
                 return html
-                    .replace(/ style="[^"]*"/g, "")
-                    .replace(/ class="[^"]*"/g, "")
-                    .replace(/align="[^"]*"/g, "")
-                    .replace(/face="[^"]*"/g, "")
-                    .replace(/size="[^"]*"/g, "");
+                    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                    .replace(/ style="[^"]*"/gi, "")
+                    .replace(/ class="[^"]*"/gi, "")
+                    .replace(/ bgcolor="[^"]*"/gi, "")
+                    .replace(/ width="[^"]*"/gi, "")
+                    .replace(/ height="[^"]*"/gi, "")
+                    .replace(/ valign="[^"]*"/gi, "")
+                    .replace(/ align="[^"]*"/gi, "");
             },
         },
         onUpdate: ({editor}) => {
@@ -396,15 +415,19 @@ export const RichTextEditor = ({value, onChange}) => {
     });
 
     useEffect(() => {
-        if (editor && value !== undefined && value !== editor.getHTML()) {
-            editor.commands.setContent(value);
+        if (!editor || value === undefined) return;
+
+        if (editor.isFocused) return;
+
+        if (value !== editor.getHTML()) {
+            editor.commands.setContent(value, false);
         }
     }, [value, editor]);
 
     return (
         <div style={{border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden', background: '#fff'}}>
             <MenuBar editor={editor}/>
-            <div style={{
+            <div className="tiptap-wrapper" style={{
                 minHeight: '200px',
                 maxHeight: '500px',
                 overflowY: 'auto',
@@ -413,6 +436,32 @@ export const RichTextEditor = ({value, onChange}) => {
             }}>
                 <EditorContent editor={editor}/>
             </div>
+
+            {/* CSS для отображения таблиц внутри редактора */}
+            <style>{`
+                .tiptap-wrapper .ProseMirror table {
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    width: 100%;
+                    margin: 0;
+                    overflow: hidden;
+                }
+                .tiptap-wrapper .ProseMirror table td,
+                .tiptap-wrapper .ProseMirror table th {
+                    min-width: 1em;
+                    border: 1px solid #ced4da;
+                    padding: 3px 5px;
+                    vertical-align: top;
+                    box-sizing: border-box;
+                    position: relative;
+                }
+                .tiptap-wrapper .ProseMirror table th {
+                    font-weight: bold;
+                    text-align: left;
+                    background-color: #f1f3f5;
+                }
+            `}</style>
         </div>
     );
 };
+

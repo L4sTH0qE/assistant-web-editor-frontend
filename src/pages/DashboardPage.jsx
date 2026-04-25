@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Row, Statistic, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography, Tabs, Badge, List, Progress, Alert } from 'antd';
-import { CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, PieChartOutlined, PlusOutlined, QuestionCircleFilled, UserOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Row, Statistic, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography, Tabs, Badge, List, Progress, Alert, Avatar } from 'antd';
+import { CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, PlusOutlined, QuestionCircleFilled, UserOutlined, SyncOutlined, WarningOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import api from '../utils/api';
@@ -15,9 +15,9 @@ const PAGE_TYPES = {
 };
 
 const SYNC_STATUSES = {
-    DRAFT: { text: 'Черновик (Не выгружалось)', status: 'default' },
+    DRAFT: { text: 'Черновик', status: 'default' },
     SYNCED: { text: 'Синхронизировано', status: 'success' },
-    DESYNCED: { text: 'Рассинхронизация', status: 'error' },
+    DESYNCED: { text: 'Не синхронизировано', status: 'error' },
 };
 
 const DashboardPage = () => {
@@ -37,7 +37,7 @@ const DashboardPage = () => {
         try {
             const [pagesRes, statsRes] = await Promise.all([
                 api.get('/pages'),
-                api.get('/analytics').catch(() => ({ data: { totalPages: 0, byType: {}, rubrics: {}, authorsActive: {} } })) // Фолбэк если API еще не готово
+                api.get('/analytics').catch(() => ({ data: { totalPages: 0, byType: {}, syncStatuses: {}, rubrics: {}, authorsActive: {} } }))
             ]);
             setPages(pagesRes.data);
             setStats(statsRes.data);
@@ -52,9 +52,7 @@ const DashboardPage = () => {
 
     const handleDuplicate = async (id) => {
         try {
-            const payload = {
-                slug: uuidv4()
-            };
+            const payload = { slug: uuidv4() };
             await api.post(`/pages/${id}/duplicate`, payload);
             message.success('Страница скопирована');
             fetchData();
@@ -70,7 +68,7 @@ const DashboardPage = () => {
                 slug: values.type === 'BASIC' ? values.slug : uuidv4()
             };
             if (values.type === 'BASIC' && !(/^[a-z0-9_-]+$/.test(values.slug))) {
-                message.error('Неверно указан путь');
+                message.error('Путь может содержать только латиницу, цифры и дефис');
                 return;
             }
             const { data } = await api.post('/pages', payload);
@@ -79,7 +77,7 @@ const DashboardPage = () => {
             form.resetFields();
             navigate(`/editor/${data.id}`);
         } catch (error) {
-            message.error('Ошибка создания');
+            message.error(error.response?.data?.error || 'Ошибка создания');
         }
     };
 
@@ -112,11 +110,12 @@ const DashboardPage = () => {
             onFilter: (value, record) => record.type === value,
         },
         {
-            title: 'Синхронизация',
+            title: 'Статус синхронизации',
             dataIndex: 'syncStatus',
             key: 'syncStatus',
             render: (status) => {
-                const conf = SYNC_STATUSES[status || 'DRAFT'];
+                const normalizedStatus = status && SYNC_STATUSES[status] ? status : 'DRAFT';
+                const conf = SYNC_STATUSES[normalizedStatus];
                 return <Badge status={conf.status} text={conf.text} />;
             },
             filters: Object.keys(SYNC_STATUSES).map(k => ({ text: SYNC_STATUSES[k].text, value: k })),
@@ -165,7 +164,7 @@ const DashboardPage = () => {
             <div>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
                     <Alert
-                        title="Здесь хранятся все ваши черновики и подготовленные материалы"
+                        title="Здесь хранятся все черновики и подготовленные материалы"
                         type="info" showIcon
                     />
                     <Button type="create" icon={<PlusOutlined/>} onClick={() => setIsModalOpen(true)}>
@@ -177,7 +176,7 @@ const DashboardPage = () => {
                     dataSource={pages}
                     rowKey="id"
                     loading={loading}
-                    pagination={{pageSize: 12}}
+                    pagination={{pageSize: 10}}
                     locale={{
                         triggerDesc: 'Нажмите для сортировки по убыванию',
                         triggerAsc: 'Нажмите для сортировки по возрастанию',

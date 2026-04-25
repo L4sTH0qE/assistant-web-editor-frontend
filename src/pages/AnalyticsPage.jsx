@@ -5,7 +5,7 @@ import {
     Card,
     Col,
     Form,
-    List,
+    Flex,
     message,
     Progress,
     Row,
@@ -49,7 +49,7 @@ const AnalyticsPage = () => {
         try {
             const [pagesRes, statsRes] = await Promise.all([
                 api.get('/pages'),
-                api.get('/analytics').catch(() => ({data: {totalPages: 0, byType: {}, rubrics: {}, authorsActive: {}}})) // Фолбэк если API еще не готово
+                api.get('/analytics').catch(() => ({data: {totalPages: 0, byType: {}, rubrics: {}, authorsActive: {}}}))
             ]);
             setPages(pagesRes.data);
             setStats(statsRes.data);
@@ -84,11 +84,11 @@ const AnalyticsPage = () => {
                                              prefix={<FileTextOutlined/>}/></Card>
                         </Col>
                         <Col span={8}>
-                            <Card><Statistic title="Синхронизировано с сайтом" value={syncedCount}
+                            <Card><Statistic title="Синхронизировано" value={syncedCount}
                                              prefix={<SyncOutlined style={{color: '#52c41a'}}/>}/></Card>
                         </Col>
                         <Col span={8}>
-                            <Card><Statistic title="Рассинхронизация (Ожидают переноса)" value={desyncCount}
+                            <Card><Statistic title="Не синхронизировано" value={desyncCount}
                                              prefix={<WarningOutlined
                                                  style={{color: 'var(--hse-red-accent)'}}/>}/></Card>
                         </Col>
@@ -97,22 +97,25 @@ const AnalyticsPage = () => {
                     <Row gutter={[16, 16]} style={{marginTop: 16}}>
                         {/* Активность редакторов */}
                         <Col span={8}>
-                            <Card title="Топ редакторов (Активность)" style={{height: '100%'}}>
-                                <List
-                                    dataSource={Object.entries(stats.authorsActive || {}).slice(0, 5)}
-                                    renderItem={([author, count], index) => (
-                                        <List.Item>
-                                            <List.Item.Meta
-                                                avatar={<Avatar
-                                                    style={{backgroundColor: index === 0 ? '#faad14' : 'var(--hse-blue)'}}
-                                                    icon={index === 0 ? <TrophyOutlined/> : <UserOutlined/>}/>}
-                                                title={author}
-                                                description={`Опубликовано материалов: ${count}`}
-                                            />
-                                        </List.Item>
-                                    )}
-                                    locale={{emptyText: 'Нет данных'}}
-                                />
+                            <Card title="Топ редакторов (Активность)" style={{ height: '100%' }}>
+                                <Flex vertical gap="middle">
+                                    {Object.entries(stats.authorsActive || {}).slice(0, 5).map(([author, count], index) => (
+                                        <Card size="small" key={author}>
+                                            <Flex align="center" gap="middle">
+                                                <Avatar
+                                                    style={{ backgroundColor: index === 0 ? '#faad14' : 'var(--hse-blue)' }}
+                                                    icon={index === 0 ? <TrophyOutlined /> : <UserOutlined />}
+                                                />
+                                                <div>
+                                                    <div>{author}</div>
+                                                    <div style={{ color: '#999', fontSize: 14 }}>
+                                                        Опубликовано материалов: {count}
+                                                    </div>
+                                                </div>
+                                            </Flex>
+                                        </Card>
+                                    ))}
+                                </Flex>
                             </Card>
                         </Col>
 
@@ -136,26 +139,28 @@ const AnalyticsPage = () => {
 
                         {/* Доли контента */}
                         <Col span={8}>
-                            <Card title="Типы контента" style={{height: '100%'}}>
-                                <List
-                                    dataSource={Object.entries(PAGE_TYPES)}
-                                    renderItem={([key, conf]) => {
+                            <Card title="Типы контента" style={{ height: '100%' }}>
+                                <Flex vertical gap="middle" style={{ padding: '16px' }}>
+                                    {Object.entries(PAGE_TYPES).map(([key, conf]) => {
                                         const count = stats.byType?.[key] || 0;
                                         const percent = stats.totalPages ? Math.round((count / stats.totalPages) * 100) : 0;
+
                                         return (
-                                            <List.Item>
-                                                <div style={{width: '100%'}}>
-                                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                                                        <Text>{conf.label}</Text>
-                                                        <Text strong>{count} шт.</Text>
-                                                    </div>
-                                                    <Progress percent={percent} strokeColor={conf.color}
-                                                              status="active"/>
-                                                </div>
-                                            </List.Item>
-                                        )
-                                    }}
-                                />
+                                            <div key={key} style={{ width: '100%' }}>
+                                                <Flex justify="space-between" align="center">
+                                                    <Text>{conf.label}</Text>
+                                                    <Text strong>{count} шт.</Text>
+                                                </Flex>
+                                                <Progress
+                                                    percent={percent}
+                                                    strokeColor={conf.color}
+                                                    status="active"
+                                                    style={{ marginTop: '8px' }}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </Flex>
                             </Card>
                         </Col>
                     </Row>

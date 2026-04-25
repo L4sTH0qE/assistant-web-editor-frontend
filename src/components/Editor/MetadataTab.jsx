@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, DatePicker, Divider, Form, Input, Select, Space, Spin, Typography, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateMetadata } from '../../store/editorSlice';
+import { updateMetadata, setSlug } from '../../store/editorSlice';
 import { PlusOutlined } from '@ant-design/icons';
 
 import dayjs from 'dayjs';
@@ -21,7 +21,7 @@ const AGE_LIMITS = [
 
 export const MetadataTab = () => {
     const dispatch = useDispatch();
-    const { metadata, type } = useSelector(state => state.editor);
+    const { metadata, type, slug } = useSelector(state => state.editor);
     const [form] = Form.useForm();
 
     const [taxonomy, setTaxonomy] = useState({ rubrics: [], tags: [], keywords: [] });
@@ -59,11 +59,18 @@ export const MetadataTab = () => {
             }
         }
 
+        restoredMetadata.slug = slug;
         form.setFieldsValue(restoredMetadata);
-    }, [metadata, form]);
+    }, [metadata, slug, form]);
 
     const handleChange = (changedValues, allValues) => {
         const preparedMetadata = { ...allValues };
+
+        if (changedValues.slug !== undefined) {
+            dispatch(setSlug(changedValues.slug));
+        }
+
+        delete preparedMetadata.slug;
 
         if (preparedMetadata.eventDates && Array.isArray(preparedMetadata.eventDates)) {
             preparedMetadata.eventDates = [
@@ -81,13 +88,12 @@ export const MetadataTab = () => {
         try {
             await api.post('/taxonomy', { type: typeStr, name: value.trim() });
             message.success(`Успешно добавлено в общий справочник`);
-            await loadTaxonomy(); // Перезагружаем список
+            await loadTaxonomy();
         } catch (e) {
             message.error('Сбой добавления или такой элемент уже существует');
         }
     };
 
-    // Кастомный рендер выпадающего списка
     const customDropdownRender = (menu, currentInputText, taxonomyType) => {
         const currentInput = currentInputText || '';
         return (
@@ -99,7 +105,7 @@ export const MetadataTab = () => {
                         type="text"
                         icon={<PlusOutlined />}
                         onClick={() => handleQuickAdd(currentInput, taxonomyType)}
-                        disabled={!currentInput} // Выключаем кнопку, если ничего не введено
+                        disabled={!currentInput}
                     >
                         Добавить "{currentInput || 'новый'}" в справочник
                     </Button>
@@ -123,7 +129,7 @@ export const MetadataTab = () => {
 
             <Alert
                 title="Метаданные"
-                description="Эта информация не видна в тексте, но необходима для корректного отображения превью и поиска порталом ВШЭ."
+                description="Эта информация необходима для корректного отображения превью и поиска порталом ВШЭ."
                 type="info"
                 style={{ marginBottom: 20 }}
             />
@@ -134,6 +140,17 @@ export const MetadataTab = () => {
             </Form.Item>
 
             <Divider />
+
+            {type === 'BASIC' && (
+                <Form.Item
+                    label="Уникальный путь страницы"
+                    name="slug"
+                    tooltip="Латинские буквы и дефис. Пример: about_us"
+                    rules={[{ pattern: /^[a-z0-9_-]+$/, message: 'Только строчная латиница, цифры и дефис' }]}
+                >
+                    <Input addonBefore="hse.ru/" placeholder="about_us" />
+                </Form.Item>
+            )}
 
             {(type === 'NEWS' || type === 'ANNOUNCEMENT') && (
                 <>

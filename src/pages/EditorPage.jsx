@@ -1,6 +1,5 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
-    Alert,
     Button,
     Dropdown,
     Divider,
@@ -14,7 +13,8 @@ import {
     Badge,
     Tooltip,
     Input,
-    Tag
+    Tag,
+    Alert
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -25,32 +25,32 @@ import {
     SyncOutlined,
     EditOutlined,
     LoadingOutlined,
-    DownOutlined,
     WarningOutlined
 } from '@ant-design/icons';
-import {useNavigate, useParams} from 'react-router-dom';
-import {useDispatch, useSelector} from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 
-import {Sidebar} from '../components/Editor/Sidebar';
-import {Canvas} from '../components/Editor/Canvas';
-import {PropertiesPanel} from '../components/Editor/PropertiesPanel';
-import {MetadataTab} from '../components/Editor/MetadataTab';
-import {TransferModal} from '../components/Editor/TransferModal';
+import { Sidebar } from '../components/Editor/Sidebar';
+import { Canvas } from '../components/Editor/Canvas';
+import { PropertiesPanel } from '../components/Editor/PropertiesPanel';
+import { MetadataTab } from '../components/Editor/MetadataTab';
+import { TransferModal } from '../components/Editor/TransferModal';
 
 import api from '../utils/api';
-import {setIsSaved, setPageData, setTitle, setSyncStatus} from '../store/editorSlice';
+import { setIsSaved, setPageData, setTitle, setSyncStatus } from '../store/editorSlice';
 
-const {Sider, Content, Header} = Layout;
-const {Text} = Typography;
+const { Sider, Content, Header } = Layout;
+const { Text } = Typography;
 
 const EditorPage = () => {
-    const {id} = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const {blocks, title, type, metadata, syncStatus, isSaved} = useSelector((state) => state.editor);
+    const { blocks, title, type, metadata, syncStatus, isSaved, slug } = useSelector((state) => state.editor);
 
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const [isMetadataOpen, setIsMetadataOpen] = useState(false);
@@ -73,7 +73,7 @@ const EditorPage = () => {
     const handleAutoLink = async () => {
         setLoading(true);
         try {
-            const {data} = await api.post(`/pages/${id}/autolink`);
+            const { data } = await api.post(`/pages/${id}/autolink`);
             dispatch(setPageData(data));
             message.success('Ссылки расставлены автоматически');
         } catch (e) {
@@ -94,10 +94,8 @@ const EditorPage = () => {
         try {
             const { data } = await api.post(`/pages/${id}/check-sync`);
             dispatch(setSyncStatus(data.status));
-            
             setSyncReportData(data);
             setIsSyncReportOpen(true);
-
         } catch (e) {
             message.error('Ошибка проверки синхронизации. Проверьте доступность ссылки.');
             dispatch(setSyncStatus('DESYNCED'));
@@ -126,7 +124,7 @@ const EditorPage = () => {
     useEffect(() => {
         const fetchPageData = async () => {
             try {
-                const {data} = await api.get(`/pages/${id}`);
+                const { data } = await api.get(`/pages/${id}`);
                 dispatch(setPageData({
                     id: data.id,
                     title: data.title,
@@ -140,7 +138,7 @@ const EditorPage = () => {
                 message.error('Ошибка загрузки страницы');
                 navigate('/');
             } finally {
-                setLoading(false);
+                setInitialLoading(false);
             }
         };
         if (id) fetchPageData();
@@ -149,11 +147,18 @@ const EditorPage = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/pages/${id}/save`, {title: title, blocks: blocks, metadata: metadata});
+            await api.post(`/pages/${id}/save`, {
+                title: title,
+                blocks: blocks,
+                metadata: metadata,
+                slug: slug
+            });
             message.success('Версия сохранена!');
+
+            dispatch(setSyncStatus('DESYNCED'));
             dispatch(setIsSaved());
         } catch (error) {
-            message.error('Не удалось сохранить');
+            message.error(error.response?.data?.error || 'Не удалось сохранить');
         } finally {
             setSaving(false);
         }
@@ -166,42 +171,29 @@ const EditorPage = () => {
         setIsTransferOpen(true);
     };
 
-    if (loading) {
-        return <div style={{display: 'flex', justifyContent: 'center', marginTop: 100}}><Spin size="large"/></div>;
+    if (initialLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--hse-gray-accent)' }}>
+                <Spin size="large" />
+            </div>
+        );
     }
 
-    function truncateStringSafe(str, maxLength) {
-        if (str.length <= maxLength) {
-            return str;
-        }
-
-        const graphemes = [...str];
-
-        if (graphemes.length <= maxLength) {
-            return str;
-        }
-
-        return graphemes.slice(0, maxLength).join('') + '...';
-    }
-
-    const CustomTitle = ({title, dispatch, setTitle, width = 300}) => {
+    const CustomTitle = ({ title, dispatch, setTitle, width = 300 }) => {
         const [isEditing, setIsEditing] = useState(false);
         const [localVal, setLocalVal] = useState(title || '');
         const inputRef = useRef(null);
 
-        // Синхронизируем локальный стейт, если title изменится извне
         useEffect(() => {
             setLocalVal(title || '');
         }, [title]);
 
-        // Автоматически ставим фокус при переходе в режим редактирования
         useEffect(() => {
             if (isEditing) {
                 inputRef.current?.focus();
             }
         }, [isEditing]);
 
-        // Сохранение вызывается по нажатию Enter или при клике вне поля (onBlur)
         const handleSave = () => {
             setIsEditing(false);
             if (localVal !== title) {
@@ -210,28 +202,43 @@ const EditorPage = () => {
         };
 
         return (
-            // Фиксированный размер для обоих состояний
             <div className="google-docs-title-wrapper" style={{width, height: 32}}>
                 {isEditing ? (
                     <Input
                         ref={inputRef}
                         value={localVal}
                         onChange={(e) => setLocalVal(e.target.value)}
-                        onBlur={handleSave}          // Сохранение при потере фокуса
-                        onPressEnter={handleSave}    // Сохранение по Enter
-                        maxLength={100}              // Ваше n-ограничение символов
+                        onBlur={handleSave}
+                        onPressEnter={handleSave}
+                        maxLength={300}
                         className="google-docs-input"
+                        style={{ width: '100%' }}
                     />
                 ) : (
                     <div
                         className="google-docs-text-container"
                         onClick={() => setIsEditing(true)}
                         title="Изменить заголовок"
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%',
+                            cursor: 'pointer',
+                            height: '100%'
+                        }}
                     >
-                        <Text ellipsis className="google-docs-text">
+                        <Text
+                            ellipsis
+                            className="google-docs-text"
+                            style={{
+                                flex: 1,
+                                marginRight: '8px'
+                            }}
+                        >
                             {title || 'Без названия'}
                         </Text>
-                        <EditOutlined className="google-docs-edit-icon"/>
+                        <EditOutlined className="google-docs-edit-icon" style={{ color: 'var(--hse-gray)' }} />
                     </div>
                 )}
             </div>
@@ -275,7 +282,6 @@ const EditorPage = () => {
         },
         {
             key: 'save',
-
             icon: saving ? <LoadingOutlined /> : <SaveOutlined />,
             label: saving ? 'Сохранение...' : 'Сохранить',
             onClick: handleSave,
@@ -284,7 +290,28 @@ const EditorPage = () => {
     ];
 
     return (
-        <Layout style={{height: '100vh'}}>
+        <Layout style={{ height: '100vh', position: 'relative' }}>
+
+            {/* OVERLAY ДЛЯ ЗАГРУЗОК (Автолинкинг, Синхронизация) */}
+            {loading && (
+                <div style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(2px)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <Spin size="large" />
+                    <Text strong style={{ marginTop: 16, color: 'var(--hse-blue)', fontSize: '16px' }}>
+                        Выполнение операции... Пожалуйста, подождите.
+                    </Text>
+                </div>
+            )}
+
             {/* ВЕРХНЯЯ ПАНЕЛЬ МЕНЮ */}
             <Header style={{
                 background: 'var(--hse-gray-accent)',
@@ -295,11 +322,9 @@ const EditorPage = () => {
                 alignItems: 'center',
                 height: 64
             }}>
-                <Space align="center" style={{display: 'flex'}}>
-                    {/* КНОПКА "НАЗАД" */}
-                    <Button style={{minWidth: '120px'}} icon={<ArrowLeftOutlined/>} onClick={handleBackClick}>Назад</Button>
+                <Space align="center" style={{ display: 'flex' }}>
+                    <Button style={{ minWidth: '120px' }} icon={<ArrowLeftOutlined />} onClick={handleBackClick}>Назад</Button>
 
-                    {/* ИНДИКАТОР СТАТУСА СИНХРОНИЗАЦИИ */}
                     <Tag
                         color={syncStatus === 'SYNCED' ? 'success' : syncStatus === 'DESYNCED' ? 'error' : 'default'}
                         icon={syncStatus === 'SYNCED' ? <SyncOutlined spin={loading} /> : <WarningOutlined />}
@@ -308,58 +333,43 @@ const EditorPage = () => {
                         {syncStatus === 'SYNCED' ? 'Синхронизировано' : syncStatus === 'DESYNCED' ? 'Не синхронизировано' : 'Черновик'}
                     </Tag>
 
-                    <Divider orientation="vertical"/>
+                    <Divider orientation="vertical" />
 
-                    {/* НАЗВАНИЕ СТРАНИЦЫ И СТАТУС СОХРАНЕНИЯ ИЗМЕНЕНИЙ */}
-                    <Badge dot={!isSaved} offset={[5, 0]} style={{display: 'flex', alignItems: 'center'}}>
-                        <CustomTitle title={title} setTitle={setTitle} dispatch={dispatch} width={300}/>
+                    <Badge dot={!isSaved} offset={[5, 0]} style={{ display: 'flex', alignItems: 'center' }}>
+                        <CustomTitle title={title} setTitle={setTitle} dispatch={dispatch} width={300} />
                     </Badge>
                 </Space>
 
                 {/* ИНСТРУМЕНТЫ СМАРТ-РЕДАКТОРА */}
                 <Space>
-                    <Dropdown
-                        menu={{ items: fileMenuItems }}
-                        trigger={['click']}
-                        placement="bottomLeft"
-                    >
-                        <Button style={{minWidth: '120px'}}>
-                            Файл
-                        </Button>
+                    <Dropdown menu={{ items: fileMenuItems }} trigger={['click']} placement="bottomLeft">
+                        <Button style={{ minWidth: '120px' }}>Файл</Button>
                     </Dropdown>
-                    <Dropdown
-                        menu={{ items: toolsMenuItems }}
-                        trigger={['click']}
-                        placement="bottomLeft"
-                    >
-                        <Button style={{minWidth: '120px'}}>
-                            Инструменты
-                        </Button>
+                    <Dropdown menu={{ items: toolsMenuItems }} trigger={['click']} placement="bottomLeft">
+                        <Button style={{ minWidth: '120px' }}>Инструменты</Button>
                     </Dropdown>
                 </Space>
             </Header>
 
-            {/* ОСНОВНАЯ ЧАСТЬ СТРАНИЦЫ РЕДАКТОРА */}
             <Layout>
-                <Sider width='15vw' theme="light" style={{borderRight: '1px solid #eee'}}><Sidebar/></Sider>
-                <Content style={{overflowY: 'auto', padding: '24px', background: 'var(--hse-gray-accent)'}}><Canvas
-                    name={title}/></Content>
-                <Sider width='25vw' theme="light" style={{borderLeft: '1px solid #eee'}}><PropertiesPanel/></Sider>
+                <Sider width='10vw' theme="light" style={{ borderRight: '1px solid #eee' }}><Sidebar /></Sider>
+                <Content style={{ overflowY: 'auto', padding: '24px', background: 'var(--hse-gray-accent)' }}><Canvas name={title} /></Content>
+                <Sider width='33vw' theme="light" style={{ borderLeft: '1px solid #eee' }}><PropertiesPanel /></Sider>
             </Layout>
 
             {/* ПАНЕЛЬ МЕТАДАННЫХ */}
             <Drawer
                 title={`Метаданные: ${type === 'NEWS' ? 'Новость' : type === 'ANNOUNCEMENT' ? 'Анонс' : 'Простая страница'}`}
                 placement="right" onClose={() => setIsMetadataOpen(false)} open={isMetadataOpen} size={450}>
-                <MetadataTab/>
+                <MetadataTab />
             </Drawer>
 
             {/* МАСТЕР ЭКСПОРТА СТРАНИЦЫ */}
-            <TransferModal isOpen={isTransferOpen} onClose={() => setIsTransferOpen(false)}/>
+            <TransferModal isOpen={isTransferOpen} onClose={() => setIsTransferOpen(false)} />
 
             {/* МОДАЛЬНОЕ ОКНО ОТЧЕТА О СИНХРОНИЗАЦИИ */}
             <Modal
-                title={<Typography.Title level={4} style={{fontFamily: 'HSE Sans', margin: 0}}>Отчет о синхронизации контента</Typography.Title>}
+                title={<Typography.Title level={4} style={{ fontFamily: 'HSE Sans', margin: 0 }}>Отчет о синхронизации контента</Typography.Title>}
                 open={isSyncReportOpen}
                 onCancel={() => setIsSyncReportOpen(false)}
                 footer={[<Button key="close" type="primary" onClick={() => setIsSyncReportOpen(false)}>Закрыть</Button>]}
@@ -377,21 +387,21 @@ const EditorPage = () => {
                         </div>
 
                         <div style={{ marginBottom: 20 }}>
-                            <Text strong>Процент совпадения текста (Алгоритм Жаккара): </Text>
-                            <Text style={{ color: syncReportData.similarityPercent >= 85 ? '#52c41a' : '#cf1322', fontWeight: 'bold' }}>
+                            <Text strong>Процент совпадения текста: </Text>
+                            <Text style={{ color: syncReportData.similarityPercent >= 80 ? '#52c41a' : '#cf1322', fontWeight: 'bold' }}>
                                 {syncReportData.similarityPercent}%
                             </Text>
                         </div>
 
                         {!syncReportData.titleMatch && (
-                            <Alert title="Внимание: Заголовок страницы на сайте отличается от черновика!" type="warning" showIcon style={{marginBottom: 16}} />
+                            <Alert title="Внимание: Заголовок страницы на сайте отличается от черновика!" type="warning" showIcon style={{ marginBottom: 16 }} />
                         )}
 
                         {syncReportData.missingOnWebsite?.length > 0 && (
                             <div style={{ marginBottom: 16 }}>
                                 <Text strong style={{ color: '#d4380d' }}>Текст ЕСТЬ в черновике, но ОТСУТСТВУЕТ на сайте (Не выгружен):</Text>
                                 <ul style={{ background: '#fff1f0', padding: '10px 10px 10px 25px', borderRadius: 4, marginTop: 8 }}>
-                                    {syncReportData.missingOnWebsite.map((text, i) => <li key={i} style={{marginBottom: 4, fontSize: 13}}>{text}</li>)}
+                                    {syncReportData.missingOnWebsite.map((text, i) => <li key={i} style={{ marginBottom: 4, fontSize: 13 }}>{text}</li>)}
                                 </ul>
                             </div>
                         )}
@@ -400,13 +410,13 @@ const EditorPage = () => {
                             <div>
                                 <Text strong style={{ color: '#0958d9' }}>Текст ЕСТЬ на сайте, но ОТСУТСТВУЕТ в черновике (Системные приписки или правки на сайте):</Text>
                                 <ul style={{ background: '#e6f4ff', padding: '10px 10px 10px 25px', borderRadius: 4, marginTop: 8 }}>
-                                    {syncReportData.extraOnWebsite.map((text, i) => <li key={i} style={{marginBottom: 4, fontSize: 13}}>{text}</li>)}
+                                    {syncReportData.extraOnWebsite.map((text, i) => <li key={i} style={{ marginBottom: 4, fontSize: 13 }}>{text}</li>)}
                                 </ul>
                             </div>
                         )}
 
                         {syncReportData.status === 'SYNCED' && syncReportData.extraOnWebsite?.length === 0 && syncReportData.missingOnWebsite?.length === 0 && (
-                            <Alert message="Тексты идентичны. Расхождений не найдено." type="success" showIcon />
+                            <Alert title="Тексты идентичны. Расхождений не найдено." type="success" showIcon />
                         )}
                     </div>
                 )}
