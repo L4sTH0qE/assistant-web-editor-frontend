@@ -43,6 +43,10 @@ body {
     color: #333;
 }
 
+*, *::before, *::after {
+    font-family: 'HSE Sans', sans-serif !important;
+}
+
 .ant-btn-primary {
     background-color: var(--hse-blue) !important;
 }
