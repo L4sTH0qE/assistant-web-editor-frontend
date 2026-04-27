@@ -106,7 +106,7 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
                         children: (
                             <>
                                 <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-                                    Ограниченный набор рубрик для фильтрации новостей (Например: "Наука", "Студентам")
+                                    Ограниченный набор рубрик для фильтрации новостей (Например: "Приоритет 2030")
                                 </Text>
                                 {renderForm('Название рубрики')}
                                 <Table
@@ -128,13 +128,13 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
                     },
                     {
                         key: 'tag',
-                        label: 'Теги',
+                        label: 'Темы',
                         children: (
                             <>
                                 <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-                                    Внутренние теги для агрегации контента (Например: "Олимпиада", "Физтех")
+                                    Внутренние темы для агрегации контента (Например: "Вышка технологическая")
                                 </Text>
-                                {renderForm('Название тега')}
+                                {renderForm('Название темы')}
                                 <Table
                                     columns={columns}
                                     dataSource={taxonomy.tags || []}
@@ -143,7 +143,7 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
                                     pagination={{ pageSize: 5 }}
                                     size="small"
                                     locale={{
-                                        emptyText: 'Справочник тегов пуст',
+                                        emptyText: 'Справочник тем пуст',
                                         triggerDesc: 'Нажмите для сортировки по убыванию',
                                         triggerAsc: 'Нажмите для сортировки по возрастанию',
                                         cancelSort: 'Нажмите, чтобы отменить сортировку'

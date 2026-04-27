@@ -284,3 +284,27 @@ body {
     border-radius: 4px;
     border: 1px;
 }
+
+.hse-text-content table,
+.ProseMirror table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 10px 0;
+}
+.hse-text-content table td,
+.hse-text-content table th,
+.ProseMirror table td,
+.ProseMirror table th {
+    min-width: 1em;
+    border: 1px solid #ced4da;
+    padding: 6px 10px;
+    vertical-align: top;
+    box-sizing: border-box;
+}
+.hse-text-content table th,
+.ProseMirror table th {
+    font-weight: bold;
+    text-align: left;
+    background-color: #f1f3f5;
+}

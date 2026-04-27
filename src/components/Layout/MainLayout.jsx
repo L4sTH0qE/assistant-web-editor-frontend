@@ -54,7 +54,7 @@ const MainLayout = () => {
                 alignItems: 'center'
             }}>
                 <Text strong style={{color: 'white', fontSize: '18px'}}>
-                    Помощник редактора НИУ ВШЭ
+                    Помощник редакторов сайтов подразделений НИУ ВШЭ
                 </Text>
                 <div>
                     <Dropdown menu={userMenu} placement="bottomRight">

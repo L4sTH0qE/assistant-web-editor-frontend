@@ -7,11 +7,10 @@ const {Text, Paragraph} = Typography;
 const {TextArea} = Input;
 
 export const TransferModal = ({isOpen, onClose}) => {
-    const {title, metadata, blocks} = useSelector(state => state.editor);
+    const {title, metadata, blocks, type, slug} = useSelector(state => state.editor);
     const [checkedSteps, setCheckedSteps] = useState([]);
     const [processedBlocks, setProcessedBlocks] = useState([]);
 
-    // Логика очистки HTML перед выдачей кода редактору
     const processHtmlForExport = (html) => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -34,6 +33,8 @@ export const TransferModal = ({isOpen, onClose}) => {
                 header.prepend(anchorTag);
             }
         });
+
+        doc.querySelectorAll('colgroup').forEach(el => el.remove());
 
         const tables = doc.querySelectorAll('table, th, td, tr, tbody, thead');
         tables.forEach(el => {
@@ -106,9 +107,14 @@ export const TransferModal = ({isOpen, onClose}) => {
         }
     };
 
-    // Формирование шагов чек-листа
     const steps = [
-        {id: 'title', label: '1. Скопируйте Заголовок', content: title, isCode: false},
+        {id: 'title', label: '1.' + (type === 'BASIC' ? '1.' : '') + ' Перенесите Заголовок', content: title, isCode: false},
+        ...(type === 'BASIC' ? [{
+            id: 'slug',
+            label: '1.2. Перенесите Уникальный путь страницы',
+            content: slug || 'Путь не задан',
+            isCode: false
+        }] : []),
         {
             id: 'annot',
             label: '2. Перенесите Аннотацию',
@@ -118,12 +124,12 @@ export const TransferModal = ({isOpen, onClose}) => {
         {
             id: 'tags',
             label: '3. Проставьте Метаданные вручную',
-            content: `Рубрика: ${metadata.rubric || 'Нет'}\nТеги: ${metadata.tags?.join(', ') || 'Нет'}\nSEO: ${metadata.keywords?.join(', ') || 'Нет'}`,
+            content: `Рубрики: ${metadata.rubrics?.join(', ') || 'Нет'}\nТеги: ${metadata.tags?.join(', ') || 'Нет'}\nКлючевые слова: ${metadata.keywords?.join(', ') || 'Нет'}`,
             isCode: false
         },
         ...processedBlocks.map((b, index) => ({
             id: `html_${index}`,
-            label: `4.${index + 1} Вставьте HTML код блока (Текст)`,
+            label: `4.${index + 1}. Вставьте HTML код блока (Текст)`,
             content: b.exportHtml,
             isCode: true
         }))

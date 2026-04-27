@@ -25,7 +25,8 @@ import {
     SyncOutlined,
     EditOutlined,
     LoadingOutlined,
-    WarningOutlined
+    WarningOutlined,
+    HistoryOutlined
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -35,6 +36,7 @@ import { Canvas } from '../components/Editor/Canvas';
 import { PropertiesPanel } from '../components/Editor/PropertiesPanel';
 import { MetadataTab } from '../components/Editor/MetadataTab';
 import { TransferModal } from '../components/Editor/TransferModal';
+import { VersionHistoryDrawer } from '../components/Editor/VersionHistoryDrawer';
 
 import api from '../utils/api';
 import { setIsSaved, setPageData, setTitle, setSyncStatus } from '../store/editorSlice';
@@ -58,6 +60,8 @@ const EditorPage = () => {
 
     const [isSyncReportOpen, setIsSyncReportOpen] = useState(false);
     const [syncReportData, setSyncReportData] = useState(null);
+
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
     useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -131,7 +135,8 @@ const EditorPage = () => {
                     type: data.type,
                     blocks: data.blocks || [],
                     metadata: data.metadata || {},
-                    syncStatus: data.syncStatus
+                    syncStatus: data.syncStatus,
+                    slug: data.slug
                 }));
             } catch (error) {
                 console.error(error);
@@ -250,17 +255,23 @@ const EditorPage = () => {
             key: 'metadata',
             icon: <SettingOutlined />,
             label: (
-                <Tooltip title="Настроить рубрики, теги и URL страницы" placement="right">
+                <Tooltip title="Настроить рубрики, темы, URL страницы" placement="right">
                     <span>Метаданные</span>
                 </Tooltip>
             ),
             onClick: () => setIsMetadataOpen(true),
         },
         {
+            type: 'divider',
+        },
+        {
             key: 'autolink',
             icon: <LinkOutlined />,
             label: 'Авто-ссылки',
             onClick: handleAutoLink,
+        },
+        {
+            type: 'divider',
         },
         {
             key: 'sync',
@@ -271,6 +282,15 @@ const EditorPage = () => {
     ];
 
     const fileMenuItems = [
+        {
+            key: 'history',
+            icon: <HistoryOutlined />,
+            label: 'История версий',
+            onClick: () => setIsHistoryOpen(true),
+        },
+        {
+            type: 'divider'
+        },
         {
             key: 'export',
             icon: <CloudUploadOutlined style={{ color: 'var(--hse-green-accent)' }} />,
@@ -421,6 +441,13 @@ const EditorPage = () => {
                     </div>
                 )}
             </Modal>
+
+            {/* ИСТОРИЯ ВЕРСИЙ */}
+            <VersionHistoryDrawer
+                isOpen={isHistoryOpen}
+                onClose={() => setIsHistoryOpen(false)}
+                pageId={id}
+            />
         </Layout>
     );
 };

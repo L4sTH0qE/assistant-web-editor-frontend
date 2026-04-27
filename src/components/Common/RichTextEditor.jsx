@@ -12,6 +12,7 @@ import {TableRow} from '@tiptap/extension-table-row';
 import {TableCell} from '@tiptap/extension-table-cell';
 import {TableHeader} from '@tiptap/extension-table-header';
 
+
 import {
     BoldOutlined,
     DeleteColumnOutlined,
@@ -36,6 +37,7 @@ const AnchorInput = ({editor}) => {
     const headingAttrs = editor.getAttributes('heading');
     const [localValue, setLocalValue] = useState(headingAttrs.id || '');
 
+
     useEffect(() => {
         const docActive = document.activeElement;
         if (docActive && docActive.getAttribute('id') !== 'anchor-input-field') {
@@ -43,12 +45,14 @@ const AnchorInput = ({editor}) => {
         }
     }, [headingAttrs.id]);
 
+
     const handleBlur = () => {
         const newSlug = localValue.trim().replace(/\s+/g, '-');
         if (newSlug !== (headingAttrs.id || '')) {
             editor.chain().focus().updateAttributes('heading', {id: newSlug}).run();
         }
     };
+
 
     return (
         <Tooltip title="Название якоря">
@@ -70,11 +74,13 @@ const AnchorInput = ({editor}) => {
 const ImageNodeView = ({ node, selected, editor, getPos }) => {
     const { src, alt, title, width, height } = node.attrs;
 
+
     const handleClick = () => {
         if (typeof getPos === 'function') {
             editor.chain().focus().setNodeSelection(getPos()).run();
         }
     };
+
 
     return (
         <NodeViewWrapper
@@ -111,8 +117,8 @@ const ImageNodeView = ({ node, selected, editor, getPos }) => {
                     fontStyle: 'italic',
                     lineHeight: 'normal'
                 }}>
-                  {title}
-              </span>
+                {title}
+            </span>
             )}
         </NodeViewWrapper>
     );
@@ -121,6 +127,7 @@ const ImageNodeView = ({ node, selected, editor, getPos }) => {
 
 const ResizableImage = Image.extend({
     draggable: true,
+
 
     addAttributes() {
         return {
@@ -155,13 +162,19 @@ const CustomHeading = Heading.extend({
 const MenuBar = ({editor}) => {
     const fileInputRef = useRef(null);
 
+
+    const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [isFileModalOpen, setIsFileModalOpen] = useState(false);
+
+    const [linkForm] = Form.useForm();
     const [imageForm] = Form.useForm();
     const [fileForm] = Form.useForm();
     const [currentImageSrc, setCurrentImageSrc] = useState(null);
 
+
     const [, setUpdateId] = useState(0);
+
 
     useEffect(() => {
         if (!editor) return;
@@ -170,19 +183,36 @@ const MenuBar = ({editor}) => {
         return () => editor.off('transaction', handleTransaction);
     }, [editor]);
 
+
     if (!editor) return null;
 
+
+    const isHeading = editor.isActive('heading');
+    const isLinkActive = editor.isActive('link');
+    const isImageActive = editor.isActive('image');
+
+
     // --- ЛОГИКА ССЫЛОК ---
-    const setLink = () => {
+    const openLinkModal = () => {
         const previousUrl = editor.getAttributes('link').href;
-        const url = window.prompt(previousUrl ? 'Изменить URL:' : 'Введите URL или Якорь (#):', previousUrl || '');
-        if (url === null) return;
-        if (url === '') {
-            editor.chain().focus().extendMarkRange('link').unsetLink().run();
-            return;
-        }
-        editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
+        linkForm.setFieldsValue({ url: previousUrl || '' });
+        setIsLinkModalOpen(true);
     };
+
+
+    const handleLinkSubmit = (values) => {
+        const { url } = values;
+
+        if (!url || url.trim() === '') {
+            // Если поле очистили, удаляем ссылку
+            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+        } else {
+            // Добавляем или обновляем ссылку
+            editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
+        }
+        setIsLinkModalOpen(false);
+    };
+
 
     // --- ЛОГИКА ФАЙЛОВ ---
     const openFileModal = () => {
@@ -190,10 +220,12 @@ const MenuBar = ({editor}) => {
         setIsFileModalOpen(true);
     };
 
+
     const handleFileSubmit = (values) => {
         editor.chain().focus().insertContent(`<a href="#" class="hse-file-stub">[${values.fileName}]</a> `).run();
         setIsFileModalOpen(false);
     };
+
 
     // --- ЛОГИКА ИЗОБРАЖЕНИЙ ---
     const handleImageIconClick = () => {
@@ -207,15 +239,18 @@ const MenuBar = ({editor}) => {
         }
     };
 
+
     const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
 
         const hideLoading = message.loading('Загрузка изображения на сервер...', 0);
         try {
             const formData = new FormData();
             formData.append('file', file);
             const {data} = await api.post('/files/upload', formData, {headers: {'Content-Type': 'multipart/form-data'}});
+
 
             const permanentUrl = data.url;
             setCurrentImageSrc(permanentUrl);
@@ -230,6 +265,7 @@ const MenuBar = ({editor}) => {
         }
     };
 
+
     const handleImageSubmit = (values) => {
         editor.chain().focus().setImage({
             src: currentImageSrc,
@@ -241,9 +277,6 @@ const MenuBar = ({editor}) => {
         setIsImageModalOpen(false);
     };
 
-    const isHeading = editor.isActive('heading');
-    const isLinkActive = editor.isActive('link');
-    const isImageActive = editor.isActive('image');
 
     return (
         <>
@@ -255,8 +288,10 @@ const MenuBar = ({editor}) => {
                 gap: 4
             }}>
 
+
                 <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*"
                        onChange={handleImageUpload}/>
+
 
                 {/* ЗАГОЛОВКИ */}
                 <Select
@@ -274,7 +309,9 @@ const MenuBar = ({editor}) => {
                 />
                 {isHeading && <AnchorInput editor={editor}/>}
 
+
                 <Divider orientation="vertical"/>
+
 
                 {/* ТЕКСТ */}
                 <Tooltip title="Жирный"><Button size="small" icon={<BoldOutlined/>}
@@ -290,7 +327,9 @@ const MenuBar = ({editor}) => {
                                                      type={editor.isActive('strike') ? 'primary' : 'text'}
                                                      onClick={() => editor.chain().focus().toggleStrike().run()}/></Tooltip>
 
+
                 <Divider orientation="vertical"/>
+
 
                 {/* ССЫЛКИ, КАРТИНКИ, ФАЙЛЫ */}
                 <Tooltip
@@ -299,12 +338,13 @@ const MenuBar = ({editor}) => {
                     key={`link-${isLinkActive}`}
                 >
                     <Button size="small" icon={<LinkOutlined/>} type={isLinkActive ? 'primary' : 'text'}
-                            onClick={setLink}/>
+                            onClick={openLinkModal}/>
                 </Tooltip>
                 <Tooltip title="Удалить ссылку">
                     <Button size="small" icon={<DisconnectOutlined/>} type="text" disabled={!isLinkActive}
                             onClick={() => editor.chain().focus().extendMarkRange('link').unsetLink().run()}/>
                 </Tooltip>
+
 
                 <Tooltip
                     title={isImageActive ? "Настройки изображения" : "Вставить изображение"}
@@ -318,7 +358,9 @@ const MenuBar = ({editor}) => {
                     <Button size="small" icon={<FileTextOutlined/>} onClick={openFileModal}/>
                 </Tooltip>
 
+
                 <Divider orientation="vertical"/>
+
 
                 {/* ТАБЛИЦЫ */}
                 <Tooltip title="Создать таблицу 3x3">
@@ -341,6 +383,7 @@ const MenuBar = ({editor}) => {
                     </>
                 )}
 
+
                 <Divider orientation="vertical"/>
                 <Tooltip title="Отменить"><Button size="small" icon={<UndoOutlined/>}
                                                   onClick={() => editor.chain().focus().undo().run()}
@@ -350,9 +393,31 @@ const MenuBar = ({editor}) => {
                                                    disabled={!editor.can().redo()}/></Tooltip>
             </Space>
 
+
+            {/* МОДАЛКА ССЫЛКИ */}
+            <Modal
+                title={isLinkActive ? "Изменить ссылку" : "Вставить ссылку"}
+                open={isLinkModalOpen}
+                onOk={() => linkForm.submit()}
+                onCancel={() => setIsLinkModalOpen(false)}
+                okText="Сохранить"
+                cancelText="Отмена"
+            >
+                <Form form={linkForm} layout="vertical" onFinish={handleLinkSubmit}>
+                    <Form.Item
+                        name="url"
+                        label="URL или Якорь (#)"
+                        extra="Оставьте поле пустым, чтобы удалить ссылку."
+                    >
+                        <Input placeholder="Например: https://example.com или #anchor" />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+
             {/* МОДАЛКА ИЗОБРАЖЕНИЯ */}
             <Modal title="Настройки изображения" open={isImageModalOpen} onOk={() => imageForm.submit()}
-                   onCancel={() => setIsImageModalOpen(false)} okText="Сохранить">
+                   onCancel={() => setIsImageModalOpen(false)} okText="Сохранить" cancelText="Отмена">
                 <Form form={imageForm} layout="vertical" onFinish={handleImageSubmit}>
                     <Form.Item name="title" label="Описание (title/alt)"><Input
                         placeholder="Введите описание для слабовидящих"/></Form.Item>
@@ -365,9 +430,10 @@ const MenuBar = ({editor}) => {
                 </Form>
             </Modal>
 
+
             {/* МОДАЛКА ФАЙЛА */}
             <Modal title="Добавление файла" open={isFileModalOpen} onOk={() => fileForm.submit()}
-                   onCancel={() => setIsFileModalOpen(false)} okText="Добавить">
+                   onCancel={() => setIsFileModalOpen(false)} okText="Добавить" cancelText="Отмена">
                 <Form form={fileForm} layout="vertical" onFinish={handleFileSubmit}>
                     <Form.Item name="fileName" label="Отображаемое имя файла" rules={[{required: true}]}>
                         <Input placeholder="Например: Регламент_2026.pdf"/>
@@ -389,7 +455,10 @@ export const RichTextEditor = ({value, onChange}) => {
             Underline,
             Link.configure({openOnClick: false}),
             ResizableImage.configure({inline: false, allowBase64: true}),
-            Table.configure({resizable: true}),
+            Table.configure({
+                resizable: false,
+                allowTableNodeSelection: false,
+            }),
             TableRow,
             TableHeader,
             TableCell,
@@ -406,7 +475,9 @@ export const RichTextEditor = ({value, onChange}) => {
                     .replace(/ width="[^"]*"/gi, "")
                     .replace(/ height="[^"]*"/gi, "")
                     .replace(/ valign="[^"]*"/gi, "")
-                    .replace(/ align="[^"]*"/gi, "");
+                    .replace(/ align="[^"]*"/gi, "")
+                    .replace(/&nbsp;/gi, " ")
+                    .replace(/\u00A0/g, " ");
             },
         },
         onUpdate: ({editor}) => {
@@ -436,32 +507,6 @@ export const RichTextEditor = ({value, onChange}) => {
             }}>
                 <EditorContent editor={editor}/>
             </div>
-
-            {/* CSS для отображения таблиц внутри редактора */}
-            <style>{`
-                .tiptap-wrapper .ProseMirror table {
-                    border-collapse: collapse;
-                    table-layout: fixed;
-                    width: 100%;
-                    margin: 0;
-                    overflow: hidden;
-                }
-                .tiptap-wrapper .ProseMirror table td,
-                .tiptap-wrapper .ProseMirror table th {
-                    min-width: 1em;
-                    border: 1px solid #ced4da;
-                    padding: 3px 5px;
-                    vertical-align: top;
-                    box-sizing: border-box;
-                    position: relative;
-                }
-                .tiptap-wrapper .ProseMirror table th {
-                    font-weight: bold;
-                    text-align: left;
-                    background-color: #f1f3f5;
-                }
-            `}</style>
         </div>
     );
 };
-

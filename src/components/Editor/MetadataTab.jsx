@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Button, DatePicker, Divider, Form, Input, Select, Space, Spin, Typography, message } from 'antd';
+import { Alert, Button, DatePicker, Divider, Form, Input, Select, Space, Spin, Typography, Empty, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateMetadata, setSlug } from '../../store/editorSlice';
 import { PlusOutlined } from '@ant-design/icons';
@@ -129,13 +129,13 @@ export const MetadataTab = () => {
 
             <Alert
                 title="Метаданные"
-                description="Эта информация необходима для корректного отображения превью и поиска порталом ВШЭ."
+                description="Это дополнительная информация, необходимая для повышения удобства работы с опубликованными материалами."
                 type="info"
                 style={{ marginBottom: 20 }}
             />
 
             <Form.Item label="Ссылка на публикацию (URL)" name="externalUrl"
-                       tooltip="Для проверки синхронизации с сайтом портала">
+                       tooltip="Ссылка для проверки синхронизации материала с корпоративным порталом">
                 <Input placeholder="https://hse.ru/news/..." />
             </Form.Item>
 
@@ -145,47 +145,55 @@ export const MetadataTab = () => {
                 <Form.Item
                     label="Уникальный путь страницы"
                     name="slug"
-                    tooltip="Латинские буквы и дефис. Пример: about_us"
-                    rules={[{ pattern: /^[a-z0-9_-]+$/, message: 'Только строчная латиница, цифры и дефис' }]}
+                    tooltip="Путь страницы может состоять только из латинских букв, цифр, дефисов и нижних подчеркиваний. Пример: about_us"
+                    rules={[{ pattern: /^[a-z0-9_-]+$/, message: 'Только строчная латиница, цифры, дефис и нижнее подчеркивание' }]}
                 >
-                    <Input addonBefore="hse.ru/" placeholder="about_us" />
+                    <Input placeholder="about_us" />
+                </Form.Item>
+            )}
+
+            {(type === 'NEWS' || type === 'ANNOUNCEMENT') && (
+                <Form.Item label="Аннотация" name="annotation">
+                    <Input.TextArea rows={4} placeholder="Введите аннотацию..." />
+                </Form.Item>
+            )}
+
+            {type === 'NEWS' && (
+                <Form.Item label="Рубрики" name="rubrics" tooltip="Выберите или создайте новые рубрики">
+                    <Select
+                        mode="tags"
+                        options={rubricOptions}
+                        placeholder="Приоритет 2030, Репортаж о событии..."
+                        popupRender={(menu) => customDropdownRender(menu, (form.getFieldValue('rubrics') || []).slice(-1)[0], 'rubric')}
+                        notFoundContent={<Empty style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
+                                                description="Нет доступных рубрик" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
+                    />
                 </Form.Item>
             )}
 
             {(type === 'NEWS' || type === 'ANNOUNCEMENT') && (
                 <>
-                    <Form.Item label="Краткая Аннотация" name="annotation">
-                        <Input.TextArea rows={4} placeholder="Введите аннотацию..." />
-                    </Form.Item>
-
-                    <Form.Item label="Теги" name="tags" tooltip="Выберите или создайте новые теги">
+                    <Form.Item label="Темы" name="tags" tooltip="Выберите или создайте новые темы">
                         <Select
                             mode="tags"
                             options={tagOptions}
                             placeholder="ФКН, ДПИ..."
                             popupRender={(menu) => customDropdownRender(menu, (form.getFieldValue('tags') || []).slice(-1)[0], 'tag')}
+                            notFoundContent={<Empty style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
+                                                    description="Нет доступных тем" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
                         />
                     </Form.Item>
-
-                    <Form.Item label="Ключевые слова (SEO)" name="keywords">
+                    <Form.Item label="Ключевые слова" name="keywords" tooltip="Выберите или создайте новые SEO-слова">
                         <Select
                             mode="tags"
                             options={keywordOptions}
                             placeholder="SEO слова"
                             popupRender={(menu) => customDropdownRender(menu, (form.getFieldValue('keywords') || []).slice(-1)[0], 'keyword')}
+                            notFoundContent={<Empty style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
+                                                    description="Нет доступных ключевых слов" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
                         />
                     </Form.Item>
                 </>
-            )}
-
-            {type === 'NEWS' && (
-                <Form.Item label="Рубрика" name="rubric">
-                    <Select
-                        options={rubricOptions}
-                        placeholder="Выберите рубрику"
-                        popupRender={(menu) => customDropdownRender(menu, form.getFieldValue('rubric'), 'rubric')}
-                    />
-                </Form.Item>
             )}
 
             {type === 'ANNOUNCEMENT' && (
