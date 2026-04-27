@@ -80,8 +80,8 @@ const MainLayout = () => {
                         onClick={handleMenuClick}
                     />
                 </Sider>
-                <Layout style={{padding: '24px'}}>
-                    <Content style={{background: '#fff', minHeight: 280, borderRadius: '4px'}}>
+                <Layout>
+                    <Content style={{padding: '24px', background: '#fff', minHeight: 280, borderRadius: '4px'}}>
                         <Outlet/>
                     </Content>
                 </Layout>
