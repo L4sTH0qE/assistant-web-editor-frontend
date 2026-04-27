@@ -12,7 +12,6 @@ import {TableRow} from '@tiptap/extension-table-row';
 import {TableCell} from '@tiptap/extension-table-cell';
 import {TableHeader} from '@tiptap/extension-table-header';
 
-
 import {
     BoldOutlined,
     DeleteColumnOutlined,
@@ -29,7 +28,8 @@ import {
     StrikethroughOutlined,
     TableOutlined,
     UnderlineOutlined,
-    UndoOutlined
+    UndoOutlined,
+    DeleteOutlined
 } from '@ant-design/icons';
 
 
@@ -380,6 +380,8 @@ const MenuBar = ({editor}) => {
                                                                 onClick={() => editor.chain().focus().deleteRow().run()}/></Tooltip>
                         <Tooltip title="Удалить столбец"><Button size="small" icon={<DeleteColumnOutlined/>} danger
                                                                  onClick={() => editor.chain().focus().deleteColumn().run()}/></Tooltip>
+                        <Tooltip title="Удалить таблицу"><Button size="small" icon={<DeleteOutlined/>} danger
+                                                                 onClick={() => editor.chain().focus().deleteTable().run()}/></Tooltip>
                     </>
                 )}
 
@@ -423,9 +425,9 @@ const MenuBar = ({editor}) => {
                         placeholder="Введите описание для слабовидящих"/></Form.Item>
                     <Space>
                         <Form.Item name="width" label="Ширина (px)"><InputNumber placeholder="Авто" min={10}
-                                                                                 max={2000}/></Form.Item>
+                                                                                 max={900}/></Form.Item>
                         <Form.Item name="height" label="Высота (px)"><InputNumber placeholder="Авто" min={10}
-                                                                                  max={2000}/></Form.Item>
+                                                                                  max={1200}/></Form.Item>
                     </Space>
                 </Form>
             </Modal>

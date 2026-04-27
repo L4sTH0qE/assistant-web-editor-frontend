@@ -75,6 +75,9 @@ const EditorPage = () => {
     }, [isSaved]);
 
     const handleAutoLink = async () => {
+        if (!isSaved) {
+            await handleSave();
+        }
         setLoading(true);
         try {
             const { data } = await api.post(`/pages/${id}/autolink`);
@@ -92,6 +95,10 @@ const EditorPage = () => {
             message.warning('Сначала укажите URL в настройках метаданных!');
             setIsMetadataOpen(true);
             return;
+        }
+
+        if (!isSaved) {
+            await handleSave();
         }
 
         setLoading(true);
