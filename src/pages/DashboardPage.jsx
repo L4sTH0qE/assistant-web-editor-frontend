@@ -183,7 +183,7 @@ const DashboardPage = () => {
                         cancelSort: 'Нажмите, чтобы отменить сортировку'
                     }}
                     notFoundContent={<Empty style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
-                                            description="Нет доступных ключевых слов" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
+                                            description="Нет подготовленных материалов" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
                 />
             </div>
 

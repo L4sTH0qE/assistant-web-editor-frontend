@@ -65,7 +65,7 @@ const MainLayout = () => {
                     </Dropdown>
                 </div>
             </Header>
-            <Layout>
+            <Layout style={{background: '#fff'}}>
                 <Sider width={250} theme="light">
                     <Menu
                         mode="inline"
