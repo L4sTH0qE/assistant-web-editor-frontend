@@ -181,6 +181,9 @@ const DashboardPage = () => {
                         triggerDesc: 'Нажмите для сортировки по убыванию',
                         triggerAsc: 'Нажмите для сортировки по возрастанию',
                         cancelSort: 'Нажмите, чтобы отменить сортировку',
+                        filterReset: 'Сбросить',
+                        filterConfirm: 'Ок',
+                        filterTitle: 'Фильтры',
                         emptyText: (
                             <Empty
                                 style={{textAlign: 'center', fontFamily: 'HSE Sans'}}

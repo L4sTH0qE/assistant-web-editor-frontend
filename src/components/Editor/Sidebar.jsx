@@ -11,7 +11,7 @@ const TOOLS = [
         type: 'text',
         label: 'Текстовый блок',
         icon: <AlignLeftOutlined/>,
-        props: {content: 'Начните вводить текст страницы...'}
+        props: {content: ''}
     },
 ];
 

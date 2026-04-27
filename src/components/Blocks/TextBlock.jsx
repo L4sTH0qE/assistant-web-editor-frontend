@@ -1,7 +1,11 @@
 import React from 'react';
 
 export const TextBlock = ({content}) => {
-    const defaultText = '<p style="color: #999; font-style: italic;">Нажмите, чтобы начать редактировать текст...</p>';
+    const isEmpty = !content || content.trim() === '' || content === '<p></p>';
+
+    const displayContent = isEmpty
+        ? '<p style="color: #bfbfbf;"><em>Начните вводить текст страницы...</em></p>'
+        : content;
 
     return (
         <div
@@ -14,7 +18,7 @@ export const TextBlock = ({content}) => {
             }}
             // Опасно, но необходимо для рендера HTML из редактора
             // Так как контент создает админ, XSS маловероятен
-            dangerouslySetInnerHTML={{__html: content || defaultText}}
+            dangerouslySetInnerHTML={{__html: displayContent}}
         />
     );
 };
