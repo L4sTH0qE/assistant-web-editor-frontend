@@ -180,10 +180,19 @@ const DashboardPage = () => {
                     locale={{
                         triggerDesc: 'Нажмите для сортировки по убыванию',
                         triggerAsc: 'Нажмите для сортировки по возрастанию',
-                        cancelSort: 'Нажмите, чтобы отменить сортировку'
+                        cancelSort: 'Нажмите, чтобы отменить сортировку',
+                        emptyText: (
+                            <Empty
+                                style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
+                                description={
+                                    pages.length > 0
+                                        ? "Нет материалов по данному фильтру"
+                                        : "Нет подготовленных материалов"
+                                }
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            />
+                        )
                     }}
-                    notFoundContent={<Empty style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
-                                            description="Нет подготовленных материалов" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
                 />
             </div>
 
