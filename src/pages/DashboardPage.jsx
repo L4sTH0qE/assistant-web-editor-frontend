@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Col, Row, Statistic, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tag, Tooltip, Typography, Tabs, Badge, List, Progress, Alert, Avatar } from 'antd';
+import { Button, Card, Col, Row, Statistic, Form, Input, message, Modal, Popconfirm, Empty, Select, Space, Table, Tag, Tooltip, Typography, Tabs, Badge, List, Progress, Alert, Avatar } from 'antd';
 import { CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, PlusOutlined, QuestionCircleFilled, UserOutlined, SyncOutlined, WarningOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -182,6 +182,8 @@ const DashboardPage = () => {
                         triggerAsc: 'Нажмите для сортировки по возрастанию',
                         cancelSort: 'Нажмите, чтобы отменить сортировку'
                     }}
+                    notFoundContent={<Empty style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
+                                            description="Нет доступных ключевых слов" image={Empty.PRESENTED_IMAGE_SIMPLE}/>}
                 />
             </div>
 
