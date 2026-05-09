@@ -14,14 +14,6 @@ export const TransferModal = ({isOpen, onClose}) => {
     const processHtmlForExport = (html) => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        
-        const links = doc.querySelectorAll('a');
-        links.forEach(link => {
-            if (link.hasAttribute('name') || link.classList.contains('hse-file-stub')) return;
-            const href = link.getAttribute('href');
-            while (link.attributes.length > 0) link.removeAttribute(link.attributes[0].name);
-            if (href) link.setAttribute('href', href);
-        });
 
         const headers = doc.querySelectorAll('h2, h3, h4, h5, h6');
         headers.forEach(header => {
@@ -35,45 +27,66 @@ export const TransferModal = ({isOpen, onClose}) => {
         });
 
         doc.querySelectorAll('colgroup').forEach(el => el.remove());
-
         const tables = doc.querySelectorAll('table, th, td, tr, tbody, thead');
         tables.forEach(el => {
             while (el.attributes.length > 0) {
-                if (el.attributes[0].name === 'colspan' || el.attributes[0].name === 'rowspan') {
-                    break;
-                }
+                if (el.attributes[0].name === 'colspan' || el.attributes[0].name === 'rowspan') break;
                 el.removeAttribute(el.attributes[0].name);
             }
-            if (el.tagName === 'TABLE') {
-                el.setAttribute('border', '1');
+            if (el.tagName === 'TABLE') el.setAttribute('border', '1');
+        });
+
+        const images = Array.from(doc.querySelectorAll('img'));
+        images.forEach(img => {
+            const src = img.getAttribute('src');
+            const alt = img.getAttribute('alt') || img.getAttribute('title') || 'image';
+
+            let w = img.getAttribute('width') || img.style.width?.replace('px', '');
+            let h = img.getAttribute('height') || img.style.height?.replace('px', '');
+
+            const cleanImg = doc.createElement('img');
+            cleanImg.setAttribute('src', src);
+            if (alt) cleanImg.setAttribute('alt', alt);
+            if (w && w !== 'auto') cleanImg.setAttribute('width', parseInt(w, 10));
+            if (h && h !== 'auto') cleanImg.setAttribute('height', parseInt(h, 10));
+
+            const parentFigure = img.closest('figure');
+            if (parentFigure) {
+                parentFigure.replaceWith(cleanImg);
+            } else {
+                img.replaceWith(cleanImg);
             }
         });
 
-        const images = doc.querySelectorAll('img');
-        images.forEach(img => {
-            const w = img.style.width || img.getAttribute('width') || 'auto';
-            const h = img.style.height || img.getAttribute('height') || 'auto';
-            const title = img.getAttribute('title') || img.getAttribute('alt') || 'Файл';
+        const docLinks = Array.from(doc.querySelectorAll('a.hse-document-link'));
+        docLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            const name = link.innerText;
+            const ext = link.getAttribute('data-ext') || 'DOC';
+            const size = link.getAttribute('data-size') || '0 Кб';
 
-            const placeholder = doc.createElement('p');
-            placeholder.style.color = '#d32f2f';
-            placeholder.style.fontWeight = 'bold';
-            placeholder.innerHTML = `[ОПТИМИЗИРОВАТЬ И ПРИКРЕПИТЬ ФОТО: "${title}" | W: ${w} | H: ${h} ]`;
-            img.replaceWith(placeholder);
+            const p = doc.createElement('p');
+
+            const a = doc.createElement('a');
+            a.setAttribute('class', 'link');
+            a.setAttribute('href', href);
+            a.setAttribute('target', '_blank');
+            a.innerText = name;
+
+            const nobr = doc.createElement('nobr');
+            nobr.innerText = `(${ext}, ${size})`;
+
+            p.appendChild(a);
+            p.appendChild(doc.createTextNode(' '));
+            p.appendChild(nobr);
+
+            link.replaceWith(p);
         });
 
-        const fileStubs = doc.querySelectorAll('a.hse-file-stub');
-        fileStubs.forEach(stub => {
-            const cleanText = stub.innerText.replace('[ФАЙЛ:', '').replace(']', '').trim();
-            const placeholder = doc.createElement('p');
-            placeholder.style.color = '#1976d2';
-            placeholder.style.fontWeight = 'bold';
-            placeholder.innerHTML = `[ПРИКРЕПИТЬ ФАЙЛ: ${cleanText}]`;
-
-            if (stub.parentNode.tagName === 'P' && stub.parentNode.innerText.trim() === stub.innerText.trim()) {
-                stub.parentNode.replaceWith(placeholder);
-            } else {
-                stub.replaceWith(placeholder);
+        const allLinks = doc.querySelectorAll('a');
+        allLinks.forEach(link => {
+            if (!link.hasAttribute('name') && !link.classList.contains('link')) {
+                link.removeAttribute('class');
             }
         });
 

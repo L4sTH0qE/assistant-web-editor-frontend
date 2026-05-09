@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Card, Col, Row, Statistic, Form, Input, message, Modal, Popconfirm, Empty, Select, Space, Table, Tag, Tooltip, Typography, Tabs, Badge, List, Progress, Alert, Avatar } from 'antd';
-import { CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, PlusOutlined, QuestionCircleFilled, UserOutlined, SyncOutlined, WarningOutlined, TrophyOutlined } from '@ant-design/icons';
+import { CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, PlusOutlined, QuestionCircleFilled, UserOutlined, SearchOutlined, SyncOutlined, WarningOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import api from '../utils/api';
@@ -22,6 +22,7 @@ const SYNC_STATUSES = {
 
 const DashboardPage = () => {
     const [pages, setPages] = useState([]);
+    const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [stats, setStats] = useState({
@@ -96,8 +97,24 @@ const DashboardPage = () => {
             title: 'Заголовок',
             dataIndex: 'title',
             key: 'title',
+            width: '30%',
+            ellipsis: true,
             render: (text, record) => (
-                <a onClick={() => navigate(`/editor/${record.id}`)} style={{ fontWeight: 600, color: 'var(--hse-blue)' }}>{text}</a>
+                <Tooltip title={text} placement="topLeft">
+                    <a
+                        onClick={() => navigate(`/editor/${record.id}`)}
+                        style={{
+                            fontWeight: 600,
+                            color: 'var(--hse-blue)',
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {text}
+                    </a>
+                </Tooltip>
             ),
             sorter: (a, b) => a.title.localeCompare(b.title, "ru-RU"),
         },
@@ -105,6 +122,7 @@ const DashboardPage = () => {
             title: 'Тип',
             dataIndex: 'type',
             key: 'type',
+            width: 150,
             render: (type) => <Tag color={PAGE_TYPES[type]?.color || 'default'}>{PAGE_TYPES[type]?.label || type}</Tag>,
             filters: Object.keys(PAGE_TYPES).map(k => ({ text: PAGE_TYPES[k].label, value: k })),
             onFilter: (value, record) => record.type === value,
@@ -113,6 +131,7 @@ const DashboardPage = () => {
             title: 'Статус синхронизации',
             dataIndex: 'syncStatus',
             key: 'syncStatus',
+            width: 200,
             render: (status) => {
                 const normalizedStatus = status && SYNC_STATUSES[status] ? status : 'DRAFT';
                 const conf = SYNC_STATUSES[normalizedStatus];
@@ -125,12 +144,22 @@ const DashboardPage = () => {
             title: 'Автор',
             dataIndex: 'ownerName',
             key: 'ownerName',
-            render: (name) => <Space><UserOutlined /><span>{name || 'Unknown'}</span></Space>,
+            width: 180,
+            ellipsis: true,
+            render: (name) => (
+                <Space style={{ display: 'flex', flexWrap: 'nowrap', overflow: 'hidden' }}>
+                    <UserOutlined />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {name || 'Unknown'}
+                </span>
+                </Space>
+            ),
         },
         {
             title: 'Обновлено',
             dataIndex: 'updatedAt',
             key: 'updatedAt',
+            width: 160,
             render: (date) => new Date(date).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
             sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
             defaultSortOrder: 'descend',
@@ -138,6 +167,8 @@ const DashboardPage = () => {
         {
             title: '',
             key: 'action',
+            width: 140,
+            align: 'right',
             render: (_, record) => (
                 <Space>
                     <Tooltip title="Редактировать">
@@ -158,6 +189,10 @@ const DashboardPage = () => {
         }
     ];
 
+    const filteredPages = pages.filter(page =>
+        page.title.toLowerCase().includes(searchText.toLowerCase())
+    );
+
     return (
         <div>
             <Title level={2} style={{ color: 'var(--hse-blue)', fontFamily: 'HSE Sans' }}>Каталог страниц</Title>
@@ -167,16 +202,28 @@ const DashboardPage = () => {
                         title="Здесь хранятся все черновики и подготовленные материалы"
                         type="info" showIcon
                     />
-                    <Button type="create" icon={<PlusOutlined/>} onClick={() => setIsModalOpen(true)}>
-                        Создать материал
-                    </Button>
+                    <Space>
+                        <Input
+                            placeholder="Поиск по заголовку..."
+                            allowClear
+                            suffix={<SearchOutlined/>}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            style={{ width: 300, height: 40 }}
+                            size="large"
+                        />
+                        <Button type="primary" icon={<PlusOutlined/>} size="large" onClick={() => setIsModalOpen(true)}>
+                            Создать материал
+                        </Button>
+                    </Space>
                 </div>
                 <Table
                     columns={columns}
-                    dataSource={pages}
+                    dataSource={filteredPages}
                     rowKey="id"
                     loading={loading}
                     pagination={{pageSize: 10}}
+                    scroll={{ x: 960 }}
+                    tableLayout="fixed"
                     locale={{
                         triggerDesc: 'Нажмите для сортировки по убыванию',
                         triggerAsc: 'Нажмите для сортировки по возрастанию',
@@ -189,7 +236,7 @@ const DashboardPage = () => {
                                 style={{textAlign: 'center', fontFamily: 'HSE Sans'}}
                                 description={
                                     pages.length > 0
-                                        ? "Нет материалов по данному фильтру"
+                                        ? "Нет материалов по данному запросу"
                                         : "Нет подготовленных материалов"
                                 }
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -199,17 +246,7 @@ const DashboardPage = () => {
                 />
             </div>
 
-            <Modal
-                title="Создание нового материала"
-                open={isModalOpen}
-                onCancel={() => {
-                    setIsModalOpen(false);
-                    form.resetFields();
-                }}
-                onOk={() => form.submit()}
-                okText="Создать и перейти в редактор"
-                cancelText="Отмена"
-            >
+            <Modal title="Создание нового материала" open={isModalOpen} onCancel={() => { setIsModalOpen(false); form.resetFields(); }} onOk={() => form.submit()} okText="Создать и перейти в редактор" cancelText="Отмена">
                 <Form form={form} layout="vertical" onFinish={handleCreate} initialValues={{type: 'NEWS'}}>
                     <Form.Item name="type" label="Тип материала" rules={[{required: true}]}>
                         <Select>

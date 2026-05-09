@@ -37,18 +37,18 @@ export const GlossaryModal = ({isOpen, onClose}) => {
                 term: values.term.trim(),
                 url: values.url.trim()
             });
-            message.success('Термин добавлен в общий словарь');
+            message.success('Ключевое выражение добавлено в общий глоссарий');
             form.resetFields();
             fetchGlossary();
         } catch (error) {
-            message.error('Ошибка добавления. Возможно, термин уже существует.');
+            message.error('Ошибка добавления. Возможно, ключевое выражение уже существует.');
         }
     };
 
     const handleDelete = async (id) => {
         try {
             await api.delete(`/glossary/${id}`);
-            message.success('Термин удален');
+            message.success('Ключевое выражение удалено');
             fetchGlossary();
         } catch (error) {
             message.error('Ошибка удаления');
@@ -62,7 +62,7 @@ export const GlossaryModal = ({isOpen, onClose}) => {
 
     const columns = [
         {
-            title: 'Ключевое слово',
+            title: 'Ключевое выражение',
             dataIndex: 'term',
             key: 'term',
             render: (text) => <Text strong>{text}</Text>,
@@ -81,7 +81,7 @@ export const GlossaryModal = ({isOpen, onClose}) => {
             width: 100,
             render: (_, record) => (
                 <Popconfirm
-                    title="Удалить термин из общего словаря?"
+                    title="Удалить ключевое выражения из общего глоссария?"
                     onConfirm={() => handleDelete(record.id)}
                     okText="Да" cancelText="Нет"
                 >
@@ -145,15 +145,13 @@ export const GlossaryModal = ({isOpen, onClose}) => {
                 </Form.Item>
             </Form>
 
-            {/* Поиск по существующим терминам */}
             <Input
-                placeholder="Поиск по терминам или ссылкам..."
+                placeholder="Поиск по ключевым выражениям или ссылкам..."
                 prefix={<SearchOutlined/>}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{marginBottom: 16}}
             />
 
-            {/* Таблица текущего словаря */}
             <Table
                 columns={columns}
                 dataSource={filteredData}
@@ -161,8 +159,10 @@ export const GlossaryModal = ({isOpen, onClose}) => {
                 loading={loading}
                 pagination={{pageSize: 5}}
                 size="small"
+                scroll={{ x: 480 }}
+                tableLayout="fixed"
                 locale={{
-                    emptyText: 'Словарь пуст',
+                    emptyText: 'Глоссарий пуст',
                     triggerDesc: 'Нажмите для сортировки по убыванию',
                     triggerAsc: 'Нажмите для сортировки по возрастанию',
                     cancelSort: 'Нажмите, чтобы отменить сортировку'

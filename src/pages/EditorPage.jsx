@@ -26,7 +26,10 @@ import {
     EditOutlined,
     LoadingOutlined,
     WarningOutlined,
-    HistoryOutlined
+    HistoryOutlined,
+    CloudSyncOutlined,
+    DisconnectOutlined,
+    CloudOutlined
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -230,15 +233,17 @@ const EditorPage = () => {
                     <div
                         className="google-docs-text-container"
                         onClick={() => setIsEditing(true)}
-                        title="Изменить заголовок"
                         style={{
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
                             width: '100%',
-                            cursor: 'pointer',
-                            height: '100%'
+                            cursor: 'text',
+                            height: '100%',
+                            borderRadius: '4px',
                         }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
                         <Text
                             ellipsis
@@ -250,7 +255,7 @@ const EditorPage = () => {
                         >
                             {title || 'Без названия'}
                         </Text>
-                        <EditOutlined className="google-docs-edit-icon" style={{ color: 'var(--hse-gray)' }} />
+                        <EditOutlined className="google-docs-edit-icon" style={{color: 'var(--hse-blue-accent)'}}/>
                     </div>
                 )}
             </div>
@@ -260,7 +265,7 @@ const EditorPage = () => {
     const toolsMenuItems = [
         {
             key: 'metadata',
-            icon: <SettingOutlined />,
+            icon: <SettingOutlined/>,
             label: (
                 <Tooltip title="Настроить рубрики, темы, URL страницы" placement="right">
                     <span>Метаданные</span>
@@ -273,7 +278,7 @@ const EditorPage = () => {
         },
         {
             key: 'autolink',
-            icon: <LinkOutlined />,
+            icon: <LinkOutlined style={{ color: 'var(--hse-blue-accent)' }}/>,
             label: 'Авто-ссылки',
             onClick: handleAutoLink,
         },
@@ -282,7 +287,7 @@ const EditorPage = () => {
         },
         {
             key: 'sync',
-            icon: <SyncOutlined />,
+            icon: <SyncOutlined/>,
             label: 'Синхронизация',
             onClick: handleCheckSync,
         },
@@ -349,31 +354,75 @@ const EditorPage = () => {
                 alignItems: 'center',
                 height: 64
             }}>
-                <Space align="center" style={{ display: 'flex' }}>
-                    <Button style={{ minWidth: '120px' }} icon={<ArrowLeftOutlined />} onClick={handleBackClick}>Назад</Button>
-
-                    <Tag
-                        color={syncStatus === 'SYNCED' ? 'success' : syncStatus === 'DESYNCED' ? 'error' : 'default'}
-                        icon={syncStatus === 'SYNCED' ? <SyncOutlined spin={loading} /> : <WarningOutlined />}
-                        style={{ marginLeft: 10, fontFamily: 'HSE Sans' }}
+                <Space align="center" size="middle" style={{display: 'flex'}}>
+                    <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined/>}
+                        onClick={handleBackClick}
+                        style={{color: '#ffffff', padding: '4px 8px'}}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
-                        {syncStatus === 'SYNCED' ? 'Синхронизировано' : syncStatus === 'DESYNCED' ? 'Не синхронизировано' : 'Черновик'}
-                    </Tag>
+                        Назад
+                    </Button>
 
-                    <Divider orientation="vertical" />
+                    <div style={{width: 1, height: 24, backgroundColor: 'rgba(255, 255, 255, 0.2)'}}/>
 
-                    <Badge dot={!isSaved} offset={[5, 0]} style={{ display: 'flex', alignItems: 'center' }}>
-                        <CustomTitle title={title} setTitle={setTitle} dispatch={dispatch} width={300} />
-                    </Badge>
+                    <Space align="center" size="small">
+                        <Badge title={"Есть несохраненные изменения"} dot={!isSaved} color="gold" offset={[5, 0]}
+                               style={{display: 'flex', alignItems: 'center'}}>
+                            <CustomTitle title={title} setTitle={setTitle} dispatch={dispatch} width={300}/>
+                        </Badge>
+
+                        <Tooltip
+                            title={
+                                syncStatus === 'SYNCED' ? 'Публикация синхронизирована с сайтом' :
+                                    syncStatus === 'DESYNCED' ? 'Публикация не синхронизирована с сайтом' :
+                                        'Черновик'
+                            }
+                            placement="bottom"
+                        >
+                            <div style={{
+                                marginLeft: 12,
+                                display: 'flex',
+                                alignItems: 'center',
+                                color: syncStatus === 'SYNCED' ? '#52c41a' :
+                                    syncStatus === 'DESYNCED' ? '#faad14' :
+                                        'rgba(255, 255, 255, 0.5)',
+                            }}>
+                                {syncStatus === 'SYNCED' && <CloudSyncOutlined spin={loading} style={{fontSize: 18}}/>}
+                                {syncStatus === 'DESYNCED' && <WarningOutlined style={{fontSize: 18}}/>}
+                                {(!syncStatus || syncStatus === 'DRAFT') && <CloudOutlined style={{fontSize: 18}}/>}
+                            </div>
+                        </Tooltip>
+                    </Space>
                 </Space>
 
+
                 {/* ИНСТРУМЕНТЫ СМАРТ-РЕДАКТОРА */}
-                <Space>
-                    <Dropdown menu={{ items: fileMenuItems }} trigger={['click']} placement="bottomLeft">
-                        <Button style={{ minWidth: '120px' }}>Файл</Button>
+                <Space size="small">
+                    <Dropdown menu={{items: fileMenuItems}} trigger={['click']} placement="bottomRight">
+                        <Button
+                            type="text"
+                            style={{color: '#ffffff'}}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                            Файл
+                        </Button>
                     </Dropdown>
-                    <Dropdown menu={{ items: toolsMenuItems }} trigger={['click']} placement="bottomLeft">
-                        <Button style={{ minWidth: '120px' }}>Инструменты</Button>
+
+                    <div style={{width: 1, height: 24, backgroundColor: 'rgba(255, 255, 255, 0.2)'}}/>
+
+                    <Dropdown menu={{items: toolsMenuItems}} trigger={['click']} placement="bottomRight">
+                        <Button
+                            type="text"
+                            style={{color: '#ffffff'}}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                            Инструменты
+                        </Button>
                     </Dropdown>
                 </Space>
             </Header>

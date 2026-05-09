@@ -28,12 +28,6 @@ const PAGE_TYPES = {
     ANNOUNCEMENT: {label: 'Анонс', color: 'var(--hse-orange-accent)'}
 };
 
-const SYNC_STATUSES = {
-    DRAFT: {text: 'Черновик (Не выгружалось)', status: 'default'},
-    SYNCED: {text: 'Синхронизировано', status: 'success'},
-    DESYNCED: {text: 'Рассинхронизация', status: 'error'},
-};
-
 const AnalyticsPage = () => {
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -85,7 +79,7 @@ const AnalyticsPage = () => {
                         </Col>
                         <Col span={8}>
                             <Card><Statistic title="Синхронизировано" value={syncedCount}
-                                             prefix={<SyncOutlined style={{color: '#52c41a'}}/>}/></Card>
+                                             prefix={<SyncOutlined style={{color: 'var(--hse-green-accent)'}}/>}/></Card>
                         </Col>
                         <Col span={8}>
                             <Card><Statistic title="Не синхронизировано" value={desyncCount}
@@ -97,7 +91,7 @@ const AnalyticsPage = () => {
                     <Row gutter={[16, 16]} style={{marginTop: 16}}>
                         {/* Активность редакторов */}
                         <Col span={8}>
-                            <Card title="Топ редакторов (Активность)" style={{ height: '100%' }}>
+                            <Card title="Активность редакторов" style={{ height: '100%' }}>
                                 <Flex vertical gap="middle">
                                     {Object.entries(stats.authorsActive || {}).slice(0, 5).map(([author, count], index) => (
                                         <Card size="small" key={author}>
@@ -119,16 +113,16 @@ const AnalyticsPage = () => {
                             </Card>
                         </Col>
 
-                        {/* Популярные Рубрики и Теги */}
+                        {/* Частые рубрики и темы */}
                         <Col span={8}>
-                            <Card title="Популярные Рубрики и Теги" style={{height: '100%'}}>
+                            <Card title="Частые рубрики и темы" style={{height: '100%'}}>
                                 <Text strong style={{display: 'block', marginBottom: 8}}>Топ рубрик:</Text>
                                 <Space size={[0, 8]} wrap style={{marginBottom: 16}}>
                                     {Object.entries(stats.rubrics || {}).map(([name, count]) => (
                                         <Tag color="blue" key={name}>{name} ({count})</Tag>
                                     ))}
                                 </Space>
-                                <Text strong style={{display: 'block', marginBottom: 8}}>Частые теги:</Text>
+                                <Text strong style={{display: 'block', marginBottom: 8}}>Топ тем:</Text>
                                 <Space size={[0, 8]} wrap>
                                     {Object.entries(stats.tags || {}).map(([name, count]) => (
                                         <Tag color="green" key={name}>{name} ({count})</Tag>

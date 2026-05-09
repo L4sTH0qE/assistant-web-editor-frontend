@@ -49,6 +49,7 @@ body {
 
 .ant-btn-primary {
     background-color: var(--hse-blue) !important;
+    box-shadow: none !important;
 }
 
 .ant-btn-primary:hover {
@@ -100,6 +101,21 @@ body {
     padding: 0 24px !important;
 }
 
+.ant-select-item-option-selected {
+    background-color: var(--hse-blue) !important;
+}
+
+.ant-select-item-option-selected .ant-select-item-option-content,
+.ant-select-item-option-selected .ant-select-item-option-state {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-selected) {
+    background-color: rgba(15, 45, 105, 0.08) !important;
+    color: #333 !important;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -114,7 +130,6 @@ body {
     border-color: #000000;
 }
 
-/* Стили для текстового блока внутри редактора */
 .hse-text-content {
     font-size: 16px;
     font-family: 'HSE Sans', 'Arial', sans-serif;
@@ -158,7 +173,6 @@ body {
     font-weight: 600;
 }
 
-/* Стили для Tiptap внутри редактора */
 .ProseMirror {
     outline: none;
     min-height: 100px;
