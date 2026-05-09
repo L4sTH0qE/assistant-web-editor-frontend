@@ -30,14 +30,14 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
     const handleAdd = async (values) => {
         try {
             await api.post('/taxonomy', {
-                type: activeTab, // Тип: 'rubric', 'tag', 'keyword'
+                type: activeTab,
                 name: values.name.trim()
             });
             message.success('Добавлено в справочник');
             form.resetFields();
-            fetchTaxonomy(); // Обновляем список
+            fetchTaxonomy();
         } catch (error) {
-            message.error('Сбой. Возможно, элемент уже существует.');
+            message.error('Ошибка добавления. Возможно, элемент уже существует.');
         }
     };
 
@@ -51,7 +51,6 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
         }
     };
 
-    // Универсальные колонки таблицы
     const columns = [
         {
             title: 'Название',
