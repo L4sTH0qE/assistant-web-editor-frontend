@@ -115,6 +115,8 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
                                     loading={loading}
                                     pagination={{ pageSize: 5 }}
                                     size="small"
+                                    scroll={{ x: 480 }}
+                                    tableLayout="fixed"
                                     locale={{
                                         emptyText: 'Справочник рубрик пуст',
                                         triggerDesc: 'Нажмите для сортировки по убыванию',
@@ -141,6 +143,8 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
                                     loading={loading}
                                     pagination={{ pageSize: 5 }}
                                     size="small"
+                                    scroll={{ x: 480 }}
+                                    tableLayout="fixed"
                                     locale={{
                                         emptyText: 'Справочник тем пуст',
                                         triggerDesc: 'Нажмите для сортировки по убыванию',
@@ -167,6 +171,8 @@ export const TaxonomyModal = ({isOpen, onClose}) => {
                                     loading={loading}
                                     pagination={{ pageSize: 5 }}
                                     size="small"
+                                    scroll={{ x: 480 }}
+                                    tableLayout="fixed"
                                     locale={{
                                         emptyText: 'Справочник ключевых слов пуст',
                                         triggerDesc: 'Нажмите для сортировки по убыванию',

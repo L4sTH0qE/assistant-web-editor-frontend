@@ -159,6 +159,8 @@ export const GlossaryModal = ({isOpen, onClose}) => {
                 loading={loading}
                 pagination={{pageSize: 5}}
                 size="small"
+                scroll={{ x: 480 }}
+                tableLayout="fixed"
                 locale={{
                     emptyText: 'Глоссарий пуст',
                     triggerDesc: 'Нажмите для сортировки по убыванию',

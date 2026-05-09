@@ -49,6 +49,7 @@ body {
 
 .ant-btn-primary {
     background-color: var(--hse-blue) !important;
+    box-shadow: none !important;
 }
 
 .ant-btn-primary:hover {

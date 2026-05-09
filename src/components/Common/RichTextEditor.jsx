@@ -3,7 +3,6 @@ import {Button, Divider, Form, Input, InputNumber, message, Modal, Select, Space
 import React, {useEffect, useRef, useState} from 'react';
 import {EditorContent, NodeViewWrapper, ReactNodeViewRenderer, useEditor} from '@tiptap/react';
 import {StarterKit} from '@tiptap/starter-kit';
-import {Underline} from '@tiptap/extension-underline';
 import {Link} from '@tiptap/extension-link';
 import {Image} from '@tiptap/extension-image';
 import {Heading} from '@tiptap/extension-heading';
@@ -11,6 +10,7 @@ import {Table} from '@tiptap/extension-table';
 import {TableRow} from '@tiptap/extension-table-row';
 import {TableCell} from '@tiptap/extension-table-cell';
 import {TableHeader} from '@tiptap/extension-table-header';
+import CharacterCount from '@tiptap/extension-character-count';
 
 import {
     BoldOutlined,
@@ -27,7 +27,6 @@ import {
     RedoOutlined,
     StrikethroughOutlined,
     TableOutlined,
-    UnderlineOutlined,
     UndoOutlined,
     DeleteOutlined
 } from '@ant-design/icons';
@@ -128,7 +127,6 @@ const ImageNodeView = ({ node, selected, editor, getPos }) => {
 const ResizableImage = Image.extend({
     draggable: true,
 
-
     addAttributes() {
         return {
             ...this.parent?.(),
@@ -138,8 +136,63 @@ const ResizableImage = Image.extend({
             height: { default: null },
         };
     },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'figure.hse-figure',
+                getAttrs: (node) => {
+                    const img = node.querySelector('img');
+                    if (!img) return false;
+
+                    const w = img.style.width || img.getAttribute('width');
+                    const h = img.style.height || img.getAttribute('height');
+
+                    return {
+                        src: img.getAttribute('src'),
+                        alt: img.getAttribute('alt'),
+                        title: img.getAttribute('title'),
+                        width: w ? parseInt(w, 10) : null,
+                        height: h ? parseInt(h, 10) : null,
+                    };
+                },
+            },
+            {
+                tag: 'img[src]',
+                getAttrs: (node) => {
+                    const w = node.style.width || node.getAttribute('width');
+                    const h = node.style.height || node.getAttribute('height');
+                    return {
+                        src: node.getAttribute('src'),
+                        alt: node.getAttribute('alt'),
+                        title: node.getAttribute('title'),
+                        width: w ? parseInt(w, 10) : null,
+                        height: h ? parseInt(h, 10) : null,
+                    };
+                }
+            },
+        ];
+    },
+
     addNodeView() {
         return ReactNodeViewRenderer(ImageNodeView);
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const { width, height, title, alt, src, ...rest } = HTMLAttributes;
+
+        const imgAttrs = { src, alt, title, ...rest };
+        if (width) imgAttrs.width = width;
+        if (height) imgAttrs.height = height;
+
+        if (title) {
+            return [
+                'figure', { class: 'hse-figure', style: 'margin: 10px 0; text-align: left; padding: 0;' },
+                ['img', imgAttrs],
+                ['figcaption', { style: 'margin-top: 4px; color: var(--hse-gray, #808080); font-size: 12px; font-style: italic;' }, title]
+            ];
+        }
+        return ['img', imgAttrs];
     },
 });
 
@@ -160,21 +213,17 @@ const CustomHeading = Heading.extend({
 
 // --- ПАНЕЛЬ ИНСТРУМЕНТОВ ---
 const MenuBar = ({editor}) => {
-    const fileInputRef = useRef(null);
-
+    const imageInputRef = useRef(null);
+    const documentInputRef = useRef(null);
 
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-    const [isFileModalOpen, setIsFileModalOpen] = useState(false);
 
     const [linkForm] = Form.useForm();
     const [imageForm] = Form.useForm();
     const [fileForm] = Form.useForm();
     const [currentImageSrc, setCurrentImageSrc] = useState(null);
-
-
     const [, setUpdateId] = useState(0);
-
 
     useEffect(() => {
         if (!editor) return;
@@ -204,67 +253,44 @@ const MenuBar = ({editor}) => {
         const { url } = values;
 
         if (!url || url.trim() === '') {
-            // Если поле очистили, удаляем ссылку
             editor.chain().focus().extendMarkRange('link').unsetLink().run();
         } else {
-            // Добавляем или обновляем ссылку
             editor.chain().focus().extendMarkRange('link').setLink({href: url}).run();
         }
         setIsLinkModalOpen(false);
     };
 
-
-    // --- ЛОГИКА ФАЙЛОВ ---
-    const openFileModal = () => {
-        fileForm.setFieldsValue({fileName: 'Документ.pdf'});
-        setIsFileModalOpen(true);
-    };
-
-
-    const handleFileSubmit = (values) => {
-        editor.chain().focus().insertContent(`<a href="#" class="hse-file-stub">[${values.fileName}]</a> `).run();
-        setIsFileModalOpen(false);
-    };
-
-
-    // --- ЛОГИКА ИЗОБРАЖЕНИЙ ---
-    const handleImageIconClick = () => {
-        if (editor.isActive('image')) {
-            const attrs = editor.getAttributes('image');
-            setCurrentImageSrc(attrs.src);
-            imageForm.setFieldsValue({title: attrs.title, width: attrs.width, height: attrs.height});
-            setIsImageModalOpen(true);
-        } else {
-            fileInputRef.current?.click();
-        }
-    };
-
-
-    const handleImageUpload = async (e) => {
+    const handleFileUpload = async (e, type) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-
-        const hideLoading = message.loading('Загрузка изображения на сервер...', 0);
+        if (file.size > 10 * 1024 * 1024) {
+            message.error('Размер файла превышает 10 МБ!');
+            e.target.value = '';
+            return;
+        }
+        const hideLoading = message.loading(`Загрузка ${type === 'image' ? 'изображения' : 'документа'}...`, 0);
         try {
             const formData = new FormData();
             formData.append('file', file);
-            const {data} = await api.post('/files/upload', formData, {headers: {'Content-Type': 'multipart/form-data'}});
+            const { data } = await api.post('/files/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
-
-            const permanentUrl = data.url;
-            setCurrentImageSrc(permanentUrl);
-            imageForm.setFieldsValue({title: file.name.split('.')[0], width: null, height: null});
-            setIsImageModalOpen(true);
+            if (type === 'image') {
+                setCurrentImageSrc(data.url);
+                imageForm.setFieldsValue({ title: data.name.split('.')[0], width: null, height: null });
+                setIsImageModalOpen(true);
+            } else {
+                editor.chain().focus().insertContent(
+                    `<a href="${data.url}" data-ext="${data.extension}" data-size="${data.size}">${data.name}</a> `
+                ).run();
+            }
         } catch (error) {
-            console.error(error);
             message.error('Ошибка загрузки на сервер');
         } finally {
             hideLoading();
             e.target.value = '';
         }
     };
-
 
     const handleImageSubmit = (values) => {
         editor.chain().focus().setImage({
@@ -287,10 +313,8 @@ const MenuBar = ({editor}) => {
                 width: '100%',
                 gap: 4
             }}>
-
-
-                <input type="file" ref={fileInputRef} style={{display: 'none'}} accept="image/*"
-                       onChange={handleImageUpload}/>
+                <input type="file" ref={imageInputRef} style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'image')} />
+                <input type="file" ref={documentInputRef} style={{ display: 'none' }} accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" onChange={(e) => handleFileUpload(e, 'document')} />
 
 
                 {/* ЗАГОЛОВКИ */}
@@ -320,9 +344,6 @@ const MenuBar = ({editor}) => {
                 <Tooltip title="Курсив"><Button size="small" icon={<ItalicOutlined/>}
                                                 type={editor.isActive('italic') ? 'primary' : 'text'}
                                                 onClick={() => editor.chain().focus().toggleItalic().run()}/></Tooltip>
-                <Tooltip title="Подчеркнутый"><Button size="small" icon={<UnderlineOutlined/>}
-                                                      type={editor.isActive('underline') ? 'primary' : 'text'}
-                                                      onClick={() => editor.chain().focus().toggleUnderline().run()}/></Tooltip>
                 <Tooltip title="Зачеркнутый"><Button size="small" icon={<StrikethroughOutlined/>}
                                                      type={editor.isActive('strike') ? 'primary' : 'text'}
                                                      onClick={() => editor.chain().focus().toggleStrike().run()}/></Tooltip>
@@ -345,17 +366,19 @@ const MenuBar = ({editor}) => {
                             onClick={() => editor.chain().focus().extendMarkRange('link').unsetLink().run()}/>
                 </Tooltip>
 
-
-                <Tooltip
-                    title={isImageActive ? "Настройки изображения" : "Вставить изображение"}
-                    trigger="hover"
-                    key={`img-${isImageActive}`}
-                >
-                    <Button size="small" icon={<PictureOutlined/>} type={isImageActive ? 'primary' : 'text'}
-                            onClick={handleImageIconClick}/>
+                <Tooltip title={isImageActive ? "Настройки изображения" : "Вставить изображение"}>
+                    <Button size="small" icon={<PictureOutlined />} type={isImageActive ? 'primary' : 'text'} onClick={() => {
+                        if (isImageActive) {
+                            const attrs = editor.getAttributes('image');
+                            setCurrentImageSrc(attrs.src);
+                            imageForm.setFieldsValue({ title: attrs.title, width: attrs.width, height: attrs.height });
+                            setIsImageModalOpen(true);
+                        } else imageInputRef.current?.click();
+                    }} />
                 </Tooltip>
-                <Tooltip title="Добавить файл для скачивания">
-                    <Button size="small" icon={<FileTextOutlined/>} onClick={openFileModal}/>
+
+                <Tooltip title="Добавить документ">
+                    <Button size="small" icon={<FileTextOutlined />} onClick={() => documentInputRef.current?.click()} />
                 </Tooltip>
 
 
@@ -422,26 +445,13 @@ const MenuBar = ({editor}) => {
                    onCancel={() => setIsImageModalOpen(false)} okText="Сохранить" cancelText="Отмена">
                 <Form form={imageForm} layout="vertical" onFinish={handleImageSubmit}>
                     <Form.Item name="title" label="Описание (title/alt)"><Input
-                        placeholder="Введите описание для слабовидящих"/></Form.Item>
+                        placeholder="Введите описание"/></Form.Item>
                     <Space>
                         <Form.Item name="width" label="Ширина (px)"><InputNumber placeholder="Авто" min={10}
                                                                                  max={900}/></Form.Item>
                         <Form.Item name="height" label="Высота (px)"><InputNumber placeholder="Авто" min={10}
                                                                                   max={1200}/></Form.Item>
                     </Space>
-                </Form>
-            </Modal>
-
-
-            {/* МОДАЛКА ФАЙЛА */}
-            <Modal title="Добавление файла" open={isFileModalOpen} onOk={() => fileForm.submit()}
-                   onCancel={() => setIsFileModalOpen(false)} okText="Добавить" cancelText="Отмена">
-                <Form form={fileForm} layout="vertical" onFinish={handleFileSubmit}>
-                    <Form.Item name="fileName" label="Отображаемое имя файла" rules={[{required: true}]}>
-                        <Input placeholder="Например: Регламент_2026.pdf"/>
-                    </Form.Item>
-                    <Typography.Text type="secondary">В редактор будет добавлена заглушка, которую при экспорте нужно
-                        будет заменить на реальный файл.</Typography.Text>
                 </Form>
             </Modal>
         </>
@@ -454,7 +464,6 @@ export const RichTextEditor = ({value, onChange}) => {
         extensions: [
             StarterKit.configure({heading: false, blockquote: false, codeBlock: false}),
             CustomHeading.configure({levels: [2, 3, 4, 5, 6]}),
-            Underline,
             Link.configure({openOnClick: false}),
             ResizableImage.configure({inline: false, allowBase64: true}),
             Table.configure({
@@ -464,12 +473,15 @@ export const RichTextEditor = ({value, onChange}) => {
             TableRow,
             TableHeader,
             TableCell,
+            CharacterCount,
         ],
         content: value,
         editorProps: {
-            // ОЧИСТКА MS WORD И EXCEL
             transformPastedHTML(html) {
                 return html
+                    .replace(/<figcaption[^>]*>[\s\S]*?<\/figcaption>/gi, '')
+                    .replace(/<\/?u>/gi, '')
+                    .replace(/text-decoration\s*:\s*underline/gi, '')
                     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
                     .replace(/ style="[^"]*"/gi, "")
                     .replace(/ class="[^"]*"/gi, "")
@@ -508,6 +520,23 @@ export const RichTextEditor = ({value, onChange}) => {
                 fontFamily: 'HSE Sans, sans-serif'
             }}>
                 <EditorContent editor={editor}/>
+            </div>
+
+            <div style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                padding: '4px 12px',
+                background: '#fafafa',
+                borderTop: '1px solid #eee',
+                fontSize: '12px',
+                color: 'var(--hse-gray)'
+            }}>
+                {editor && (
+                    <Typography.Text type="secondary" style={{fontSize: '12px', marginTop: '12px'}}>
+                        Число слов: {editor.storage.characterCount.words()} |
+                        Число символов: {editor.storage.characterCount.characters()}
+                    </Typography.Text>
+                )}
             </div>
         </div>
     );
