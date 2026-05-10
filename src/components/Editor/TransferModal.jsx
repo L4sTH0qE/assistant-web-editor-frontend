@@ -58,12 +58,12 @@ export const TransferModal = ({isOpen, onClose}) => {
             }
         });
 
-        const docLinks = Array.from(doc.querySelectorAll('a.hse-document-link'));
-        docLinks.forEach(link => {
-            const href = link.getAttribute('href');
-            const name = link.innerText;
-            const ext = link.getAttribute('data-ext') || 'DOC';
-            const size = link.getAttribute('data-size') || '0 Кб';
+        const docLinks = Array.from(doc.querySelectorAll('span[data-type="document-link"]'));
+        docLinks.forEach(span => {
+            const href = span.getAttribute('href');
+            const name = span.getAttribute('name');
+            const ext = span.getAttribute('ext');
+            const size = span.getAttribute('size');
 
             const p = doc.createElement('p');
 
@@ -80,7 +80,7 @@ export const TransferModal = ({isOpen, onClose}) => {
             p.appendChild(doc.createTextNode(' '));
             p.appendChild(nobr);
 
-            link.replaceWith(p);
+            span.replaceWith(p);
         });
 
         const allLinks = doc.querySelectorAll('a');
