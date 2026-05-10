@@ -11,6 +11,7 @@ import {TableRow} from '@tiptap/extension-table-row';
 import {TableCell} from '@tiptap/extension-table-cell';
 import {TableHeader} from '@tiptap/extension-table-header';
 import CharacterCount from '@tiptap/extension-character-count';
+import { Node, mergeAttributes } from '@tiptap/core';
 
 import {
     BoldOutlined,
@@ -211,6 +212,46 @@ const CustomHeading = Heading.extend({
 });
 
 
+const DocumentNodeView = ({ node }) => {
+    return (
+        <NodeViewWrapper as="span" style={{ display: 'inline-block', margin: '2px 4px', userSelect: 'none' }}>
+            <span style={{ color: 'var(--hse-blue-accent)', textDecoration: 'underline' }}>
+                {node.attrs.name}
+            </span>
+            <span style={{ color: 'var(--hse-gray, #808080)', fontSize: '13px', marginLeft: '6px' }}>
+                ({node.attrs.ext}, {node.attrs.size})
+            </span>
+        </NodeViewWrapper>
+    );
+};
+
+
+const DocumentLink = Node.create({
+    name: 'documentLink',
+    group: 'inline',
+    inline: true,
+    atom: true,
+
+    addAttributes() {
+        return {
+            href: { default: null },
+            name: { default: 'Документ' },
+            ext: { default: 'FILE' },
+            size: { default: '0 Кб' }
+        };
+    },
+    parseHTML() {
+        return [{ tag: 'span[data-type="document-link"]' }];
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ['span', mergeAttributes(HTMLAttributes, { 'data-type': 'document-link' })];
+    },
+    addNodeView() {
+        return ReactNodeViewRenderer(DocumentNodeView);
+    }
+});
+
+
 // --- ПАНЕЛЬ ИНСТРУМЕНТОВ ---
 const MenuBar = ({editor}) => {
     const imageInputRef = useRef(null);
@@ -280,9 +321,13 @@ const MenuBar = ({editor}) => {
                 imageForm.setFieldsValue({ title: data.name.split('.')[0], width: null, height: null });
                 setIsImageModalOpen(true);
             } else {
-                editor.chain().focus().insertContent(
-                    `<a href="${data.url}" data-ext="${data.extension}" data-size="${data.size}">${data.name}</a> `
-                ).run();
+                editor.chain().focus()
+                    .insertContent({
+                        type: 'documentLink',
+                        attrs: { href: data.url, name: data.name, ext: data.extension, size: data.size }
+                    })
+                    .insertContent(' ')
+                    .run();
             }
         } catch (error) {
             message.error('Ошибка загрузки на сервер');
@@ -466,6 +511,7 @@ export const RichTextEditor = ({value, onChange}) => {
             CustomHeading.configure({levels: [2, 3, 4, 5, 6]}),
             Link.configure({openOnClick: false}),
             ResizableImage.configure({inline: false, allowBase64: true}),
+            DocumentLink,
             Table.configure({
                 resizable: false,
                 allowTableNodeSelection: false,
