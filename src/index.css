@@ -248,6 +248,28 @@ body {
     font-weight: 600;
 }
 
+.hse-text-content h1 a,
+.hse-text-content h2 a,
+.hse-text-content h3 a,
+.hse-text-content h4 a,
+.hse-text-content h5 a,
+.hse-text-content h6 a {
+    color: inherit !important;
+    border-bottom: none !important;
+    text-decoration: none !important;
+}
+
+.ProseMirror h1 a,
+.ProseMirror h2 a,
+.ProseMirror h3 a,
+.ProseMirror h4 a,
+.ProseMirror h5 a,
+.ProseMirror h6 a {
+    color: inherit !important;
+    border-bottom: none !important;
+    text-decoration: none !important;
+}
+
 .custom-label-font .ant-form-item-label > label {
     font-family: 'HSE Sans', sans-serif;
 }

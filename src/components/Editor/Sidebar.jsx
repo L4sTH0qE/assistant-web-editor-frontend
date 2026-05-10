@@ -1,41 +1,54 @@
-import React from 'react';
-import {Button, Space, Typography} from 'antd';
-import {AlignLeftOutlined} from '@ant-design/icons';
-import {useDispatch} from 'react-redux';
-import {addBlock} from '../../store/editorSlice';
+import React, { useState } from 'react';
+import { Button, Space, Typography, Modal, Form, Input, message } from 'antd';
+import { AlignLeftOutlined, UserOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
+import { addBlock } from '../../store/editorSlice';
+import api from '../../utils/api';
 
-const {Title, Text} = Typography;
-
-const TOOLS = [
-    {
-        type: 'text',
-        label: 'Текстовый блок',
-        icon: <AlignLeftOutlined/>,
-        props: {content: ''}
-    },
-];
+const { Title } = Typography;
 
 export const Sidebar = () => {
     const dispatch = useDispatch();
+    const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+    const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+
+    const handleAddPerson = async (values) => {
+        setLoading(true);
+        try {
+            const { data } = await api.post('/pages/parse-person', { url: values.url });
+            dispatch(addBlock({ type: 'person', props: { name: data.name, photoUrl: data.photoUrl } }));
+            setIsPersonModalOpen(false);
+            form.resetFields();
+            message.success('Персона добавлена');
+        } catch (error) {
+            message.error('Ошибка! Проверьте ссылку на страницу сотрудника ВШЭ');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div style={{padding: '16px', background: '#fff', height: '100%', borderRight: '1px solid #eee'}}>
-            <Title level={4} style={{margin: 0, fontFamily: 'HSE Sans'}}>
-                Добавить блоки
-            </Title>
+            <Title level={4} style={{margin: 0, fontFamily: 'HSE Sans'}}>Добавить блоки</Title>
+
             <Space orientation="vertical" style={{width: '100%', marginTop: '16px'}}>
-                {TOOLS.map((tool) => (
-                    <Button
-                        key={tool.type}
-                        block
-                        icon={tool.icon}
-                        style={{textAlign: 'left', height: 'auto', padding: '12px', fontFamily: 'HSE Sans'}}
-                        onClick={() => dispatch(addBlock({type: tool.type, props: tool.props}))}
-                    >
-                        {tool.label}
-                    </Button>
-                ))}
+                <Button block icon={<AlignLeftOutlined/>} style={{textAlign: 'left', padding: '12px'}} onClick={() => dispatch(addBlock({type: 'text', props: {content: ''}}))}>
+                    Текстовый блок
+                </Button>
+
+                <Button block icon={<UserOutlined/>} style={{textAlign: 'left', padding: '12px'}} onClick={() => setIsPersonModalOpen(true)}>
+                    Блок персоны
+                </Button>
             </Space>
+
+            <Modal title="Добавить карточку сотрудника" open={isPersonModalOpen} onOk={() => form.submit()} onCancel={() => setIsPersonModalOpen(false)} confirmLoading={loading}>
+                <Form form={form} layout="vertical" onFinish={handleAddPerson}>
+                    <Form.Item name="url" label="Ссылка на профиль на hse.ru" rules={[{ required: true, type: 'url' }]}>
+                        <Input placeholder="https://www.hse.ru/org/persons/219484540/" />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 };

@@ -95,10 +95,20 @@ export const TransferModal = ({isOpen, onClose}) => {
 
     useEffect(() => {
         if (isOpen) {
-            const processed = blocks.map(block => ({
-                id: block.id,
-                exportHtml: processHtmlForExport(block.props.content)
-            }));
+            const processed = blocks.map(block => {
+                if (block.type === 'person') {
+                    return {
+                        id: block.id,
+                        blockName: 'Карточка персоны',
+                        exportHtml: `<p style="text-align: center;">\n  <img alt="" class="g-pic" height="200" src="${block.props.photoUrl}" width="200">\n</p>\n<p class="h4 c" style="text-align: center;">\n  ${block.props.name}\n</p>`
+                    };
+                }
+                return {
+                    id: block.id,
+                    blockName: 'Текстовый блок',
+                    exportHtml: processHtmlForExport(block.props.content)
+                };
+            });
             setProcessedBlocks(processed);
             setCheckedSteps([]);
         }
@@ -142,7 +152,7 @@ export const TransferModal = ({isOpen, onClose}) => {
         },
         ...processedBlocks.map((b, index) => ({
             id: `html_${index}`,
-            label: `4.${index + 1}. Вставьте HTML код блока (Текст)`,
+            label: `4.${index + 1}. Вставьте HTML код блока`,
             content: b.exportHtml,
             isCode: true
         }))
