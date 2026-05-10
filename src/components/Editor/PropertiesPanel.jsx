@@ -57,6 +57,8 @@ const getBlockTypeName = (type, id) => {
     switch (type) {
         case 'text':
             return `Текстовый блок ${id + 1}`;
+        case 'person':
+            return `Блок персоны ${id + 1}`;
         default:
             return 'Блок';
     }
