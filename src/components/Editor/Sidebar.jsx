@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Button, Space, Typography, Modal, Form, Input, message } from 'antd';
-import { AlignLeftOutlined, UserOutlined } from '@ant-design/icons';
-import { useDispatch } from 'react-redux';
-import { addBlock } from '../../store/editorSlice';
+import React, {useState} from 'react';
+import {Button, Form, Input, message, Modal, Space, Typography} from 'antd';
+import {AlignLeftOutlined, UserOutlined} from '@ant-design/icons';
+import {useDispatch} from 'react-redux';
+import {addBlock} from '../../store/editorSlice';
 import api from '../../utils/api';
 
-const { Title } = Typography;
+const {Title} = Typography;
 
 export const Sidebar = () => {
     const dispatch = useDispatch();
@@ -16,8 +16,8 @@ export const Sidebar = () => {
     const handleAddPerson = async (values) => {
         setLoading(true);
         try {
-            const { data } = await api.post('/pages/parse-person', { url: values.url });
-            dispatch(addBlock({ type: 'person', props: { name: data.name, photoUrl: data.photoUrl } }));
+            const {data} = await api.post('/pages/parse-person', {url: values.url});
+            dispatch(addBlock({type: 'person', props: {name: data.name, photoUrl: data.photoUrl}}));
             setIsPersonModalOpen(false);
             form.resetFields();
             message.success('Персона добавлена');
@@ -33,19 +33,27 @@ export const Sidebar = () => {
             <Title level={4} style={{margin: 0, fontFamily: 'HSE Sans'}}>Добавить блоки</Title>
 
             <Space orientation="vertical" style={{width: '100%', marginTop: '16px'}}>
-                <Button block icon={<AlignLeftOutlined/>} style={{textAlign: 'left', padding: '12px'}} onClick={() => dispatch(addBlock({type: 'text', props: {content: ''}}))}>
+                <Button block icon={<AlignLeftOutlined/>} style={{textAlign: 'left', padding: '12px'}}
+                        onClick={() => dispatch(addBlock({type: 'text', props: {content: ''}}))}>
                     Текстовый блок
                 </Button>
 
-                <Button block icon={<UserOutlined/>} style={{textAlign: 'left', padding: '12px'}} onClick={() => setIsPersonModalOpen(true)}>
+                <Button block icon={<UserOutlined/>} style={{textAlign: 'left', padding: '12px'}}
+                        onClick={() => setIsPersonModalOpen(true)}>
                     Блок персоны
                 </Button>
             </Space>
 
-            <Modal title="Добавить карточку сотрудника" open={isPersonModalOpen} onOk={() => form.submit()} onCancel={() => setIsPersonModalOpen(false)} confirmLoading={loading}>
+            <Modal title="Добавить карточку сотрудника" open={isPersonModalOpen} onOk={() => form.submit()}
+                   onCancel={() => setIsPersonModalOpen(false)} confirmLoading={loading} okText="Создать блок персоны"
+                   cancelText="Отмена">
                 <Form form={form} layout="vertical" onFinish={handleAddPerson}>
-                    <Form.Item name="url" label="Ссылка на профиль на hse.ru" rules={[{ required: true, type: 'url' }]}>
-                        <Input placeholder="https://www.hse.ru/org/persons/219484540/" />
+                    <Form.Item name="url" label="Ссылка на страницу сотрудника на hse.ru" rules={[{
+                        required: true,
+                        message: 'Введите ссылку на страницу сотрудника на hse.ru!',
+                        type: 'url'
+                    }]}>
+                        <Input placeholder="https://www.hse.ru/org/persons/219484540/"/>
                     </Form.Item>
                 </Form>
             </Modal>
