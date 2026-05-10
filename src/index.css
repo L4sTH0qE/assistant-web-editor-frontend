@@ -253,21 +253,32 @@ body {
 .hse-text-content h3 a,
 .hse-text-content h4 a,
 .hse-text-content h5 a,
-.hse-text-content h6 a {
-    color: inherit !important;
-    border-bottom: none !important;
-    text-decoration: none !important;
-}
-
+.hse-text-content h6 a,
 .ProseMirror h1 a,
 .ProseMirror h2 a,
 .ProseMirror h3 a,
 .ProseMirror h4 a,
 .ProseMirror h5 a,
 .ProseMirror h6 a {
-    color: inherit !important;
-    border-bottom: none !important;
+    color: #000000 !important;
     text-decoration: none !important;
+    border-bottom: 1px solid #000000 !important;
+}
+
+.hse-text-content h1 a:hover,
+.hse-text-content h2 a:hover,
+.hse-text-content h3 a:hover,
+.hse-text-content h4 a:hover,
+.hse-text-content h5 a:hover,
+.hse-text-content h6 a:hover,
+.ProseMirror h1 a:hover,
+.ProseMirror h2 a:hover,
+.ProseMirror h3 a:hover,
+.ProseMirror h4 a:hover,
+.ProseMirror h5 a:hover,
+.ProseMirror h6 a:hover {
+    color: var(--hse-red-accent) !important;
+    border-bottom: 1px solid var(--hse-red-accent) !important;
 }
 
 .custom-label-font .ant-form-item-label > label {
