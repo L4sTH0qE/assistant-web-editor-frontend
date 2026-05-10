@@ -244,7 +244,12 @@ const DocumentLink = Node.create({
         return [{ tag: 'span[data-type="document-link"]' }];
     },
     renderHTML({ HTMLAttributes }) {
-        return ['span', mergeAttributes(HTMLAttributes, { 'data-type': 'document-link' })];
+        return [
+            'span',
+            mergeAttributes(HTMLAttributes, { 'data-type': 'document-link' }),
+            ['span', { style: 'color: var(--hse-blue-accent); text-decoration: underline;' }, HTMLAttributes.name || 'Документ'],
+            ['span', { style: 'color: var(--hse-gray, #808080); font-size: 13px; margin-left: 6px;' }, `(${HTMLAttributes.ext}, ${HTMLAttributes.size})`]
+        ];
     },
     addNodeView() {
         return ReactNodeViewRenderer(DocumentNodeView);
@@ -523,6 +528,13 @@ export const RichTextEditor = ({value, onChange}) => {
         ],
         content: value,
         editorProps: {
+            handleClick(view, pos, event) {
+                const target = event.target;
+                if (target.tagName === 'A' || target.closest('span[data-type="document-link"]')) {
+                    event.preventDefault();
+                    return false;
+                }
+            },
             transformPastedHTML(html) {
                 return html
                     .replace(/<figcaption[^>]*>[\s\S]*?<\/figcaption>/gi, '')
