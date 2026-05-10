@@ -100,7 +100,7 @@ export const TransferModal = ({isOpen, onClose}) => {
                     return {
                         id: block.id,
                         blockName: 'Карточка персоны',
-                        exportHtml: `<p style="text-align: center;">\n  <img alt="" class="g-pic" height="200" src="${block.props.photoUrl}" width="200">\n</p>\n<p class="h4 c" style="text-align: center;">\n  ${block.props.name}\n</p>`
+                        exportHtml: `<p style="text-align: center;">\n  <img alt="" class="g-pic" height="200" src="${block.props.photoUrl}" width="200" style="border-radius: 50%; object-fit: cover;">\n</p>\n<p class="h4 c" style="text-align: center;">\n  ${block.props.name}\n</p>`
                     };
                 }
                 return {
