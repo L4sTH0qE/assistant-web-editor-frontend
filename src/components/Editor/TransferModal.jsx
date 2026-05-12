@@ -130,29 +130,52 @@ export const TransferModal = ({isOpen, onClose}) => {
         }
     };
 
+    let eventDatesString = 'Не задана';
+    if (metadata.eventDates && Array.isArray(metadata.eventDates)) {
+        const formatDate = (iso) => iso ? new Date(iso).toLocaleString('ru-RU', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+        }) : '';
+        
+        const start = formatDate(metadata.eventDates[0]);
+        const end = formatDate(metadata.eventDates[1]);
+
+        if (start && end) {
+            eventDatesString = `с ${start} по ${end}`;
+        } else if (start) {
+            eventDatesString = start;
+        }
+    }
+
     const steps = [
-        {id: 'title', label: '1.' + (type === 'BASIC' ? '1.' : '') + ' Перенесите Заголовок', content: title, isCode: false},
+        {id: 'title', label: '1. Перенесите Заголовок', content: title, isCode: false},
         ...(type === 'BASIC' ? [{
             id: 'slug',
-            label: '1.2. Перенесите Уникальный путь страницы',
-            content: slug || 'Путь не задан',
+            label: '2. Перенесите Уникальный путь страницы',
+            content: slug || '(Путь не задан)',
             isCode: false
         }] : []),
-        {
+        ...(type !== 'BASIC' ? [{
             id: 'annot',
-            label: '2. Перенесите Аннотацию',
+            label: '2.1. Перенесите Аннотацию',
             content: metadata.annotation || '(Аннотация не заполнена)',
             isCode: false
-        },
-        {
+        }] : []),
+        ...(type === 'NEWS' ? [{
             id: 'tags',
-            label: '3. Проставьте Метаданные вручную',
-            content: `Рубрики: ${metadata.rubrics?.join(', ') || 'Нет'}\nТеги: ${metadata.tags?.join(', ') || 'Нет'}\nКлючевые слова: ${metadata.keywords?.join(', ') || 'Нет'}`,
+            label: '2.2. Проставьте Метаданные вручную',
+            content: `Рубрики: ${metadata.rubrics?.join(', ') || 'Нет'}\nТемы: ${metadata.tags?.join(', ') || 'Нет'}\nКлючевые слова: ${metadata.keywords?.join(', ') || 'Нет'}`,
             isCode: false
-        },
+        }] : []),
+        ...(type === 'ANNOUNCEMENT' ? [{
+            id: 'tags',
+            label: '2.2. Проставьте Метаданные вручную',
+            content: `Темы: ${metadata.tags?.join(', ') || 'Нет'}\nКлючевые слова: ${metadata.keywords?.join(', ') || 'Нет'}\nДата проведения: ${eventDatesString}\nВозрастное ограничение: ${metadata.ageLimit || 'Не задано'}`,
+            isCode: false
+        }] : []),
         ...processedBlocks.map((b, index) => ({
             id: `html_${index}`,
-            label: `4.${index + 1}. Вставьте HTML код блока`,
+            label: `3.${index + 1}. Вставьте HTML код блока`,
             content: b.exportHtml,
             isCode: true
         }))
