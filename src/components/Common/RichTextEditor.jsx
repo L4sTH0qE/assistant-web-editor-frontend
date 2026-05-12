@@ -16,6 +16,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import {
     BoldOutlined,
     DeleteColumnOutlined,
+    DeleteOutlined,
     DeleteRowOutlined,
     DisconnectOutlined,
     FileTextOutlined,
@@ -24,12 +25,13 @@ import {
     ItalicOutlined,
     LinkOutlined,
     NumberOutlined,
+    OrderedListOutlined,
     PictureOutlined,
     RedoOutlined,
     StrikethroughOutlined,
     TableOutlined,
     UndoOutlined,
-    DeleteOutlined
+    UnorderedListOutlined
 } from '@ant-design/icons';
 
 
@@ -397,6 +399,20 @@ const MenuBar = ({editor}) => {
                 <Tooltip title="Зачеркнутый"><Button size="small" icon={<StrikethroughOutlined/>}
                                                      type={editor.isActive('strike') ? 'primary' : 'text'}
                                                      onClick={() => editor.chain().focus().toggleStrike().run()}/></Tooltip>
+
+                
+                <Divider orientation="vertical"/>
+
+
+                {/* СПИСКИ */}
+                <Tooltip title="Маркированный список">
+                    <Button size="small" icon={<UnorderedListOutlined/>}
+                            onClick={() => editor.chain().focus().toggleBulletList().run()}/>
+                </Tooltip>
+                <Tooltip title="Нумерованный список">
+                    <Button size="small" icon={<OrderedListOutlined/>}
+                            onClick={() => editor.chain().focus().toggleOrderedList().run()}/>
+                </Tooltip>
 
 
                 <Divider orientation="vertical"/>
