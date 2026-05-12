@@ -48,12 +48,15 @@ export const MetadataTab = () => {
 
         let restoredMetadata = { ...metadata };
 
-        if (restoredMetadata.eventDates && Array.isArray(restoredMetadata.eventDates) && restoredMetadata.eventDates.length === 2) {
+        if (restoredMetadata.eventDates && Array.isArray(restoredMetadata.eventDates)) {
             const startStr = restoredMetadata.eventDates[0];
             const endStr = restoredMetadata.eventDates[1];
-
-            if (startStr && endStr) {
-                restoredMetadata.eventDates = [dayjs(startStr), dayjs(endStr)];
+        
+            if (startStr || endStr) {
+                restoredMetadata.eventDates = [
+                    startStr ? dayjs(startStr) : null,
+                    endStr ? dayjs(endStr) : null
+                ];
             } else {
                 restoredMetadata.eventDates = null;
             }
@@ -200,7 +203,7 @@ export const MetadataTab = () => {
                 <div style={{ background: '#f9f9f9', padding: 16, borderRadius: 6 }}>
                     <Text strong>Обязательные параметры анонса</Text>
                     <Form.Item label="Дата проведения" name="eventDates" style={{marginTop: 8}}>
-                        <RangePicker showTime format="DD.MM.YYYY HH:mm" style={{ width: '100%' }} />
+                        <RangePicker showTime format="DD.MM.YYYY HH:mm" style={{ width: '100%' }} placeholder={['Дата начала', 'Дата окончания']} allowEmpty={[false, true]} />
                     </Form.Item>
                     <Form.Item label="Возрастное ограничение" name="ageLimit">
                         <Select options={AGE_LIMITS} placeholder="Выберите возраст" />
