@@ -19,6 +19,8 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
+    const [loginForm] = Form.useForm();
+
     const handleAuthSuccess = async (token) => {
         localStorage.setItem('jwtToken', token);
         const meResponse = await api.get('/auth/me');
@@ -37,6 +39,7 @@ const LoginPage = () => {
             }
         } catch (error) {
             message.error(error.response?.data?.error || 'Неверный логин или пароль');
+            loginForm.resetFields(['password']);
         } finally {
             setLoading(false);
         }
@@ -103,7 +106,7 @@ const LoginPage = () => {
     };
 
     const LoginForm = () => (
-        <Form name="login" onFinish={onLoginSubmit} layout="vertical" requiredMark={false}>
+        <Form form={loginForm} name="login" onFinish={onLoginSubmit} layout="vertical" requiredMark={false}>
             <Form.Item name="username" label={<Text strong>Корпоративная почта</Text>} rules={[{ required: true, message: 'Введите почту!' }]}>
                 <Input prefix={<UserOutlined />} placeholder="ivanov@hse.ru" size="large" />
             </Form.Item>
