@@ -359,3 +359,22 @@ body {
     text-align: left;
     background-color: #f1f3f5;
 }
+
+.responsive-btn {
+    text-align: left;
+    padding: 12px;
+}
+
+@media (max-width: 1024px) {
+    .btn-text {
+        display: none;
+    }
+    .responsive-btn {
+        text-align: center;
+        padding: 12px 0;
+    }
+
+    .sidebar-title {
+        display: none;
+    }
+}

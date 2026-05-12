@@ -30,17 +30,17 @@ export const Sidebar = () => {
 
     return (
         <div style={{padding: '16px', background: '#fff', height: '100%', borderRight: '1px solid #eee'}}>
-            <Title level={4} style={{margin: 0, fontFamily: 'HSE Sans'}}>Добавить блоки</Title>
+            <Title className="sidebar-title" level={4} style={{margin: 0, fontFamily: 'HSE Sans'}}>Добавить блоки</Title>
 
             <Space orientation="vertical" style={{width: '100%', marginTop: '16px'}}>
-                <Button block icon={<AlignLeftOutlined/>} style={{textAlign: 'left', padding: '12px'}}
+                <Button block icon={<AlignLeftOutlined/>} className="responsive-btn"
                         onClick={() => dispatch(addBlock({type: 'text', props: {content: ''}}))}>
-                    Текстовый блок
+                    <span className="btn-text">Текстовый блок</span>
                 </Button>
 
-                <Button block icon={<UserOutlined/>} style={{textAlign: 'left', padding: '12px'}}
+                <Button block icon={<UserOutlined/>} className="responsive-btn"
                         onClick={() => setIsPersonModalOpen(true)}>
-                    Блок персоны
+                    <span className="btn-text">Блок персоны</span>
                 </Button>
             </Space>
 
