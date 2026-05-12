@@ -18,12 +18,10 @@ function App() {
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        const checkIfMobile = () => {
-            const isSmallScreen = window.innerWidth < 1024;
-            
+        const checkIfMobile = () => {            
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
             const isMobileAgent = /android|ipad|playbook|silk|iphone|ipod/i.test(userAgent.toLowerCase());
-            setIsMobile(isSmallScreen || isMobileAgent);
+            setIsMobile(isMobileAgent);
         };
         checkIfMobile();
         window.addEventListener('resize', checkIfMobile);
