@@ -11,10 +11,16 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      '/ws': { // Для вебсокетов
+      '/ws': {
         target: 'http://localhost:8080',
         ws: true,
       }
     }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    css: true,
   }
 })
