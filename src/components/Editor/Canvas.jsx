@@ -56,13 +56,12 @@ export const Canvas = (props) => {
             }}>
                 <Title
                     level={1}
-                    style={{ margin: 0, fontFamily: 'HSE Sans' }}
+                    style={{ margin: 0, fontFamily: 'HSE Sans', marginBottom: '16px' }}
                 >
                     {props.name || 'Без названия'}
                 </Title>
 
                 {metadata?.coverImage && (
-                    <p></p>
                     <div style={{ marginBottom: '16px' }}>
                         <img 
                             src={metadata.coverImage} 
@@ -73,8 +72,7 @@ export const Canvas = (props) => {
                 )}
 
                 {(type === 'NEWS' || type === 'ANNOUNCEMENT') && metadata?.annotation && (
-                    <p></p>
-                    <div className="lead-in">
+                    <div className="lead-in" style={{ marginBottom: '16px' }}>
                         {metadata.annotation}
                     </div>
                 )}
