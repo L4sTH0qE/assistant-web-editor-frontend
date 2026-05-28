@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, DatePicker, Divider, Form, Input, Select, Space, Spin, Typography, Empty, message } from 'antd';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useRef } from 'react-redux';
 import { updateMetadata, setSlug } from '../../store/editorSlice';
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 
