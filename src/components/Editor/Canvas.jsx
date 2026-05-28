@@ -41,7 +41,7 @@ export const Canvas = (props) => {
                 width: '100%',
                 minHeight: '100%',
                 padding: '0 0 100px 0',
-                margin: '0',
+                marginLeft: '8px',
                 cursor: 'default'
             }}
             onClick={handleBackgroundClick}
