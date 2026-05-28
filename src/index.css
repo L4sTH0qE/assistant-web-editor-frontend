@@ -410,3 +410,12 @@ body {
 .block-delete-button span {
   border-radius: inherit !important;
 }
+
+.cover-image-caption {
+    margin-top: 4px;
+    color: var(--hse-gray);
+    font-family: "HSE Slab", Georgia, 'Times New Roman', serif !important;
+    font-size: 12px;
+    font-style: italic;
+    textAlign: left;
+}

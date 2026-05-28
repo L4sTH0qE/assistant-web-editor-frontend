@@ -40,8 +40,7 @@ export const Canvas = (props) => {
             style={{
                 minHeight: '100%',
                 padding: '0 0 100px 0',
-                maxWidth: '1000px',
-                margin: '0 auto',
+                margin: '0',
                 cursor: 'default'
             }}
             onClick={handleBackgroundClick}
@@ -68,6 +67,10 @@ export const Canvas = (props) => {
                             alt="cover" 
                             style={{ width: '100%', height: 'auto', borderRadius: '4px' }} 
                         />
+                    </div>
+                ) && (
+                    <div className="cover-image-caption">
+                        © Высшая школа экономики
                     </div>
                 )}
 
