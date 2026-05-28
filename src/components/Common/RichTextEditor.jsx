@@ -192,7 +192,7 @@ const ResizableImage = Image.extend({
             return [
                 'figure', { class: 'hse-figure', style: 'margin: 10px 0; text-align: left; padding: 0;' },
                 ['img', imgAttrs],
-                ['figcaption', { style: 'margin-top: 4px; color: var(--hse-gray, #808080); font-size: 12px; font-style: italic;' }, title]
+                ['figcaption', { style: 'margin-top: 4px; color: var(--hse-gray, #808080); font-size: 12px; font-style: italic; text-align: left;' }, title]
             ];
         }
         return ['img', imgAttrs];
