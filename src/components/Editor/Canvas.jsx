@@ -68,11 +68,12 @@ export const Canvas = (props) => {
                             alt="cover" 
                             style={{ width: '100%', height: 'auto', borderRadius: '4px' }} 
                         />
-                        {metadata.coverImageCaption && (
-                            <div className="cover-image-caption">
-                                {metadata.coverImageCaption}
-                            </div>
-                        )}
+                    </div>
+                )}
+
+                {metadata?.coverImage && (
+                    <div className="cover-image-caption">
+                        © Высшая школа экономики
                     </div>
                 )}
 
