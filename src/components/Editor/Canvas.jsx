@@ -38,6 +38,7 @@ export const Canvas = (props) => {
     return (
         <div
             style={{
+                width: '100%',
                 minHeight: '100%',
                 padding: '0 0 100px 0',
                 margin: '0 auto',
