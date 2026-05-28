@@ -62,7 +62,9 @@ export const Canvas = (props) => {
                 </Title>
 
                 {metadata?.coverImage && (
-                    <p></p>
+                    <p>
+                    
+                    </p>
                 ) && (
                     <div>
                         <img 
@@ -74,7 +76,9 @@ export const Canvas = (props) => {
                 )}
 
                 {(type === 'NEWS' || type === 'ANNOUNCEMENT') && metadata?.annotation && (
-                    <p></p>
+                    <p>
+                    
+                    </p>
                 ) && (
                     <div className="lead-in">
                         {metadata.annotation}
