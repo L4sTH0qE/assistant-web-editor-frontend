@@ -51,7 +51,7 @@ export const Canvas = (props) => {
                 padding: '24px 16px',
                 borderRadius: '4px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                cursor: not-allowed
+                cursor: 'not-allowed'
             }}>
                 <Title
                     level={1}
