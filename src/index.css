@@ -391,3 +391,7 @@ body {
     font-family: "HSE Slab", Georgia, 'Times New Roman', serif !important;
     font-size: 170% !important;
 }
+
+.block-delete-button {
+  border-radius: 0 0 0 4px !important;
+}
