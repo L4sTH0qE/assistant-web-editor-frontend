@@ -9,7 +9,7 @@ import { CanvasItem } from './CanvasItem';
 const { Title, Paragraph } = Typography;
 
 export const Canvas = (props) => {
-    const { blocks, metadata } = useSelector((state) => state.editor);
+    const { blocks, metadata, type } = useSelector((state) => state.editor);
     const dispatch = useDispatch();
 
     const sensors = useSensors(
@@ -48,10 +48,10 @@ export const Canvas = (props) => {
         >
             <div style={{
                 marginBottom: '16px',
-                background: '#f8f5f2',
                 padding: '24px 16px',
                 borderRadius: '4px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                cursor: not-allowed
             }}>
                 <Title
                     level={1}
@@ -60,11 +60,20 @@ export const Canvas = (props) => {
                     {props.name || 'Без названия'}
                 </Title>
 
-                {/* ОТОБРАЖЕНИЕ АННОТАЦИИ */}
-                {metadata?.annotation && (
-                    <Paragraph style={{ marginTop: 16, fontSize: '18px', fontFamily: 'HSE Sans' }}>
+                {metadata?.coverImage && (
+                    <div style={{ marginBottom: '16px' }}>
+                        <img 
+                            src={metadata.coverImage} 
+                            alt="cover" 
+                            style={{ width: '100%', height: 'auto', borderRadius: '4px' }} 
+                        />
+                    </div>
+                )}
+
+                {(type === 'NEWS' || type === 'ANNOUNCEMENT') && metadata?.annotation && (
+                    <div className="lead-in">
                         {metadata.annotation}
-                    </Paragraph>
+                    </div>
                 )}
             </div>
 

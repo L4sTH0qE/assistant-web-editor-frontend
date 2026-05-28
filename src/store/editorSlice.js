@@ -14,6 +14,7 @@ const initialState = {
         annotation: '',
         eventDates: null,
         ageLimit: '0+',
+        coverImage: null,
     },
     syncStatus: 'DRAFT', // DRAFT, SYNCED, DESYNCED
     isSaved: true,
