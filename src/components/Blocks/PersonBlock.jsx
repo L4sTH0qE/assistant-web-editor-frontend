@@ -2,7 +2,7 @@ import React from 'react';
 
 export const PersonBlock = ({ name, photoUrl }) => {
     return (
-        <div style={{ pointerEvents: 'none', background: '#f8f5f2', padding: '20px', border: '1px dashed #d7d4d1', borderRadius: '8px' }}>
+        <div style={{ pointerEvents: 'none', padding: '20px' }}>
             <p style={{ textAlign: 'center', margin: 0 }}>
                 <img
                     alt={name}
