@@ -378,3 +378,8 @@ body {
         display: none;
     }
 }
+
+.lead-in {
+    font-family: "HSE Slab", Georgia, 'Times New Roman', serif;
+    font-size: 120%;
+}
