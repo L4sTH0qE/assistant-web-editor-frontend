@@ -46,6 +46,7 @@
 body {
     margin: 0;
     padding: 0;
+    font-size: 170%;
     font-family: 'HSE Sans', sans-serif;
     background-color: var(--hse-gray);
     color: #333;
