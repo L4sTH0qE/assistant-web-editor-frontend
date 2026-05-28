@@ -56,7 +56,7 @@ export const Canvas = (props) => {
             }}>
                 <Title
                     level={1}
-                    style={{ margin: 0, fontFamily: 'HSE Sans' }}
+                    style={{ margin: 0, fontFamily: 'HSE Sans', marginBottom: '16px' }}
                 >
                     {props.name || 'Без названия'}
                 </Title>
@@ -72,7 +72,7 @@ export const Canvas = (props) => {
                 )}
 
                 {(type === 'NEWS' || type === 'ANNOUNCEMENT') && metadata?.annotation && (
-                    <div className="lead-in">
+                    <div className="lead-in" style={{ marginBottom: '16px' }}>
                         {metadata.annotation}
                     </div>
                 )}
