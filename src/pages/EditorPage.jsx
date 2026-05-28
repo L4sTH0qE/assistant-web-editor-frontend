@@ -427,10 +427,18 @@ const EditorPage = () => {
                 </Space>
             </Header>
 
-            <Layout>
+            <Layout style={{ flexDirection: 'row' }}>
                 <Sider width='10vw' theme="light" style={{ borderRight: '1px solid #eee' }}><Sidebar /></Sider>
-                <Content style={{ overflowY: 'auto', padding: '24px', background: 'var(--hse-gray-accent)' }}><Canvas name={title} /></Content>
-                <Sider width='33vw' theme="light" style={{ borderLeft: '1px solid #eee' }}><PropertiesPanel /></Sider>
+                <Content style={{
+                    overflowY: 'auto',
+                    background: 'var(--hse-gray-accent)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '0'
+                }}>
+                    <Canvas name={title} />
+                </Content>
+                <Sider width='32vw' theme="light" style={{ borderLeft: '1px solid #eee' }}><PropertiesPanel /></Sider>
             </Layout>
 
             {/* ПАНЕЛЬ МЕТАДАННЫХ */}
