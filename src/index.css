@@ -417,4 +417,5 @@ body {
     font-family: "HSE Slab", Georgia, 'Times New Roman', serif !important;
     font-size: 12px;
     font-style: italic;
+    textAlign: left;
 }
