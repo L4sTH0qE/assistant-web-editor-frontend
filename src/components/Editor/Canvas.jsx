@@ -47,7 +47,6 @@ export const Canvas = (props) => {
             onClick={handleBackgroundClick}
         >
             <div style={{
-                marginBottom: '16px',
                 padding: '24px 16px',
                 borderRadius: '4px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -72,9 +71,9 @@ export const Canvas = (props) => {
                 )}
 
                 {(type === 'NEWS' || type === 'ANNOUNCEMENT') && metadata?.annotation && (
-                    <div className="lead-in" style={{ marginBottom: '16px' }}>
+                    <h2 className="lead-in" style={{ marginBottom: '16px' }}>
                         {metadata.annotation}
-                    </div>
+                    </h2>
                 )}
             </div>
 
