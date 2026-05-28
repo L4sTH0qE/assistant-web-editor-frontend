@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Button, DatePicker, Divider, Form, Input, Select, Space, Spin, Typography, Empty, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateMetadata, setSlug } from '../../store/editorSlice';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 
 import dayjs from 'dayjs';
 import api from '../../utils/api';
@@ -18,6 +18,52 @@ const AGE_LIMITS = [
     { value: '16+', label: '16+ (Для детей старше 16 лет)' },
     { value: '18+', label: '18+ (Запрещено для детей)' }
 ];
+
+const CoverImageUploader = ({ value, onChange }) => {
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      message.error('Размер файла превышает 10 МБ');
+      return;
+    }
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const { data } = await api.post('/files/upload', formData);
+      onChange(data.url);
+      message.success('Изображение загружено');
+    } catch (err) {
+      message.error('Ошибка загрузки');
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemove = () => {
+    onChange(null);
+  };
+
+  return (
+    <div>
+      {value && (
+        <div style={{ marginBottom: 12 }}>
+          <img src={value} alt="cover" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
+          <Button type="link" danger onClick={handleRemove}>Удалить</Button>
+        </div>
+      )}
+      <Button onClick={() => fileInputRef.current.click()} loading={loading} icon={<UploadOutlined />}>
+        {value ? 'Заменить фото' : 'Загрузить заглавное фото'}
+      </Button>
+      <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleUpload} />
+    </div>
+  );
+};
 
 export const MetadataTab = () => {
     const dispatch = useDispatch();
@@ -152,6 +198,12 @@ export const MetadataTab = () => {
                     rules={[{ pattern: /^[a-z0-9_-]+$/, message: 'Только строчная латиница, цифры, дефис и нижнее подчеркивание' }]}
                 >
                     <Input placeholder="about_us" />
+                </Form.Item>
+            )}
+
+            {(type === 'NEWS' || type === 'ANNOUNCEMENT') && (
+                <Form.Item label="Заглавное фото" name="coverImage" valuePropName="value">
+                    <CoverImageUploader />
                 </Form.Item>
             )}
 
