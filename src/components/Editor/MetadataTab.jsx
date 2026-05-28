@@ -58,7 +58,7 @@ const CoverImageUploader = ({ value, onChange }) => {
         </div>
       )}
       <Button onClick={() => fileInputRef.current.click()} loading={loading} icon={<UploadOutlined />}>
-        {value ? 'Заменить фото' : 'Загрузить заглавное фото'}
+        {value ? 'Заменить сплэш-картинку' : 'Загрузить сплэш-картинку'}
       </Button>
       <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleUpload} />
     </div>
@@ -78,7 +78,6 @@ export const MetadataTab = () => {
             const { data } = await api.get('/taxonomy');
             setTaxonomy(data || { rubrics: [], tags: [], keywords: [] });
         } catch (e) {
-            console.error('Ошибка загрузки справочников:', e);
             message.error('Ошибка связи с сервером справочников');
         } finally {
             setLoading(false);
@@ -202,7 +201,7 @@ export const MetadataTab = () => {
             )}
 
             {(type === 'NEWS' || type === 'ANNOUNCEMENT') && (
-                <Form.Item label="Заглавное фото" name="coverImage" valuePropName="value">
+                <Form.Item label="Сплэш-картинка" name="coverImage" valuePropName="value">
                     <CoverImageUploader />
                 </Form.Item>
             )}
