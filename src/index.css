@@ -392,6 +392,21 @@ body {
     font-size: 170% !important;
 }
 
-.block-delete-button {
+.block-delete-button,
+.block-delete-button .ant-btn-icon,
+.block-delete-button::before,
+.block-delete-button::after {
   border-radius: 0 0 0 4px !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-bottom-left-radius: 4px !important;
+}
+
+.block-delete-button {
+  box-shadow: none !important;
+}
+
+.block-delete-button span {
+  border-radius: inherit !important;
 }
