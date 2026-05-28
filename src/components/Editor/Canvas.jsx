@@ -69,6 +69,10 @@ export const Canvas = (props) => {
                             style={{ width: '100%', height: 'auto', borderRadius: '4px' }} 
                         />
                     </div>
+                ) && (
+                    <div className="cover-image-caption">
+                        © Высшая школа экономики
+                    </div>
                 )}
 
                 {(type === 'NEWS' || type === 'ANNOUNCEMENT') && metadata?.annotation && (
