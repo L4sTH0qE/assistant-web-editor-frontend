@@ -429,7 +429,7 @@ const EditorPage = () => {
 
             <Layout style={{ flexDirection: 'row' }}>
                 <Sider width='10vw' theme="light" style={{ borderRight: '1px solid #eee' }}><Sidebar /></Sider>
-                <Content style={{ overflowY: 'auto' padding: '20px', background: 'var(--hse-gray-accent)' }}><Canvas name={title} /></Content>
+                <Content style={{ overflowY: 'auto', padding: '20px', background: 'var(--hse-gray-accent)' }}><Canvas name={title} /></Content>
                 <Sider width='30vw' theme="light" style={{ borderLeft: '1px solid #eee' }}><PropertiesPanel /></Sider>
             </Layout>
 
