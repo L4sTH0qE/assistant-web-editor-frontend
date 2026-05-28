@@ -63,9 +63,10 @@ export const CanvasItem = ({block}) => {
             </div>
 
             {isSelected && (
-                <div className="block-delete-button" style={{position: 'absolute', top: 0, right: 0}}>
+                <div style={{position: 'absolute', top: 0, right: 0}}>
                     <Tooltip title="Удалить блок">
                         <Button
+                            className="block-delete-button"
                             type="primary"
                             danger
                             icon={<DeleteOutlined/>}
