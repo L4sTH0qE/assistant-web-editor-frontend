@@ -141,8 +141,12 @@ export const Sidebar = () => {
                 width={520}
             >
                 <Radio.Group value={mode} onChange={(e) => setMode(e.target.value)} style={{ marginBottom: 16 }}>
-                    <Radio.Button value="url"><LinkOutlined /> По ссылке (авто)</Radio.Button>
-                    <Radio.Button value="manual"><UserOutlined /> Вручную</Radio.Button>
+                    <Radio.Button value="url" style={{ width: '140px', textAlign: 'center' }}>
+                        <LinkOutlined /> По ссылке
+                    </Radio.Button>
+                    <Radio.Button value="manual" style={{ width: '140px', textAlign: 'center' }}>
+                        <UserOutlined /> Вручную
+                    </Radio.Button>
                 </Radio.Group>
 
                 <Form form={form} layout="vertical" onFinish={handleSubmit}>
@@ -160,14 +164,14 @@ export const Sidebar = () => {
                         <>
                             <Form.Item
                                 name="name"
-                                label="Имя персоны"
+                                label="Имя"
                                 rules={[{ required: true, message: 'Введите имя человека' }]}
                             >
                                 <Input placeholder="Иванов Иван Иванович" />
                             </Form.Item>
                             <Form.Item
                                 name="photoFile"
-                                label="Фото персоны"
+                                label="Фото"
                                 valuePropName="value"
                                 getValueFromEvent={(file) => file}
                                 rules={[{ required: true, message: 'Загрузите фото человека' }]}
@@ -182,7 +186,7 @@ export const Sidebar = () => {
                             Отмена
                         </Button>
                         <Button type="primary" htmlType="submit" loading={loading || uploading}>
-                            {mode === 'url' ? 'Создать блок' : 'Добавить персону'}
+                            Создать блок
                         </Button>
                     </Form.Item>
                 </Form>
