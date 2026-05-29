@@ -1,15 +1,34 @@
-import React, {useEffect, useState} from 'react';
-import {Alert, Button, Checkbox, Input, message, Modal, Typography} from 'antd';
-import {CheckCircleFilled, CopyOutlined} from '@ant-design/icons';
-import {useSelector} from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Checkbox, Input, message, Modal, Typography } from 'antd';
+import { CheckCircleFilled, CopyOutlined } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
 
-const {Text, Paragraph} = Typography;
-const {TextArea} = Input;
+const { Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
-export const TransferModal = ({isOpen, onClose}) => {
-    const {title, metadata, blocks, type, slug} = useSelector(state => state.editor);
+export const TransferModal = ({ isOpen, onClose }) => {
+    const { title, metadata, blocks, type, slug } = useSelector(state => state.editor);
     const [checkedSteps, setCheckedSteps] = useState([]);
     const [processedBlocks, setProcessedBlocks] = useState([]);
+
+    // Функция для форматирования метаданных: выделение жирным части до двоеточия
+    const renderMetadataContent = (text) => {
+        if (!text) return null;
+        const lines = text.split('\n');
+        return lines.map((line, idx) => {
+            const colonIndex = line.indexOf(':');
+            if (colonIndex === -1) {
+                return <div key={idx}>{line}</div>;
+            }
+            const label = line.substring(0, colonIndex + 1);
+            const value = line.substring(colonIndex + 1);
+            return (
+                <div key={idx}>
+                    <strong>{label}</strong>{value}
+                </div>
+            );
+        });
+    };
 
     const processHtmlForExport = (html) => {
         const parser = new DOMParser();
@@ -132,11 +151,11 @@ export const TransferModal = ({isOpen, onClose}) => {
 
     let eventDatesString = 'Не задана';
     if (metadata.eventDates && Array.isArray(metadata.eventDates)) {
-        const formatDate = (iso) => iso ? new Date(iso).toLocaleString('ru-RU', { 
-            day: '2-digit', month: '2-digit', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit' 
+        const formatDate = (iso) => iso ? new Date(iso).toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         }) : '';
-        
+
         const start = formatDate(metadata.eventDates[0]);
         const end = formatDate(metadata.eventDates[1]);
 
@@ -148,7 +167,7 @@ export const TransferModal = ({isOpen, onClose}) => {
     }
 
     const steps = [
-        {id: 'title', label: '1. Перенесите Заголовок', content: title, isCode: false},
+        { id: 'title', label: '1. Перенесите Заголовок', content: title, isCode: false },
         ...(type === 'BASIC' ? [{
             id: 'slug',
             label: '2. Перенесите Уникальный путь страницы',
@@ -185,14 +204,13 @@ export const TransferModal = ({isOpen, onClose}) => {
 
     return (
         <Modal
-            title={<Typography.Title level={4} style={{fontFamily: 'HSE Sans'}}>Мастер переноса в Редакторский интерфейс
-                ВШЭ</Typography.Title>}
+            title={<Typography.Title level={4} style={{ fontFamily: 'HSE Sans' }}>Мастер переноса в Редакторский интерфейс ВШЭ</Typography.Title>}
             open={isOpen}
             onCancel={onClose}
             footer={[
-                <Button key="close" style={{minWidth: '140px', fontSize: 16}} onClick={onClose}>Отменить</Button>,
-                <Button key="done" style={{minWidth: '140px', fontSize: 16}} disabled={!allChecked} onClick={onClose}
-                        icon={<CheckCircleFilled/>}>
+                <Button key="close" style={{ minWidth: '140px', fontSize: 16 }} onClick={onClose}>Отменить</Button>,
+                <Button key="done" style={{ minWidth: '140px', fontSize: 16 }} disabled={!allChecked} onClick={onClose}
+                    icon={<CheckCircleFilled />}>
                     Завершить
                 </Button>
             ]}
@@ -201,10 +219,10 @@ export const TransferModal = ({isOpen, onClose}) => {
             <Alert
                 title="Пошаговый чеклист экспорта страницы"
                 description="Последовательно скопируйте метаданные и очищенный HTML код в Редакторский интерфейс ВШЭ."
-                type="info" showIcon style={{marginBottom: 20}}
+                type="info" showIcon style={{ marginBottom: 20 }}
             />
 
-            <ul style={{padding: 0, margin: 0}}>
+            <ul style={{ padding: 0, margin: 0 }}>
                 {steps.map((item) => (
                     <li
                         key={item.id}
@@ -222,7 +240,7 @@ export const TransferModal = ({isOpen, onClose}) => {
                             checked={checkedSteps.includes(item.id)}
                             onChange={() => handleCheck(item.id)}
                         >
-                            <Text strong style={{fontSize: 15}}>
+                            <Text strong style={{ fontSize: 15 }}>
                                 {item.label}
                             </Text>
                         </Checkbox>
@@ -243,21 +261,30 @@ export const TransferModal = ({isOpen, onClose}) => {
                                 <TextArea
                                     value={item.content}
                                     readOnly
-                                    autoSize={{minRows: 2, maxRows: 6}}
-                                    style={{fontFamily: 'monospace', fontSize: 12}}
+                                    autoSize={{ minRows: 2, maxRows: 6 }}
+                                    style={{ fontFamily: 'monospace', fontSize: 12 }}
                                 />
                             ) : (
-                                <Paragraph style={{margin: 0, flex: 1, whiteSpace: 'pre-wrap'}}>
-                                    {item.content}
-                                </Paragraph>
+                                item.id === 'tags' ? (
+                                    <div style={{ flex: 1, whiteSpace: 'pre-wrap' }}>
+                                        {renderMetadataContent(item.content)}
+                                    </div>
+                                ) : (
+                                    <Paragraph style={{ margin: 0, flex: 1, whiteSpace: 'pre-wrap' }}>
+                                        {item.content}
+                                    </Paragraph>
+                                )
                             )}
-                            {item.id !== 'tags' ? (<Button
-                                    icon={<CopyOutlined/>}
+                            {item.id !== 'tags' ? (
+                                <Button
+                                    icon={<CopyOutlined />}
                                     onClick={() => handleCopy(item.content, item.id)}
                                 >
                                     Скопировать
                                 </Button>
-                            ) : (<p/>)}
+                            ) : (
+                                <p />
+                            )}
                         </div>
                     </li>
                 ))}
