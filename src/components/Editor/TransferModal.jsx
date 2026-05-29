@@ -11,7 +11,6 @@ export const TransferModal = ({ isOpen, onClose }) => {
     const [checkedSteps, setCheckedSteps] = useState([]);
     const [processedBlocks, setProcessedBlocks] = useState([]);
 
-    // Функция для форматирования метаданных: выделение жирным части до двоеточия
     const renderMetadataContent = (text) => {
         if (!text) return null;
         const lines = text.split('\n');
@@ -204,7 +203,7 @@ export const TransferModal = ({ isOpen, onClose }) => {
 
     return (
         <Modal
-            title={<Typography.Title level={4} style={{ fontFamily: 'HSE Sans' }}>Мастер переноса в Редакторский интерфейс ВШЭ</Typography.Title>}
+            title={<Typography.Title level={4} style={{ fontFamily: 'HSE Sans' }}>Мастер переноса в Редакторский интерфейс НИУ ВШЭ</Typography.Title>}
             open={isOpen}
             onCancel={onClose}
             footer={[
@@ -218,7 +217,7 @@ export const TransferModal = ({ isOpen, onClose }) => {
         >
             <Alert
                 title="Пошаговый чеклист экспорта страницы"
-                description="Последовательно скопируйте метаданные и очищенный HTML код в Редакторский интерфейс ВШЭ."
+                description="Последовательно скопируйте метаданные и очищенный HTML код в Редакторский интерфейс НИУ ВШЭ."
                 type="info" showIcon style={{ marginBottom: 20 }}
             />
 
