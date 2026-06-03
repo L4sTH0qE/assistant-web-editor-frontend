@@ -201,7 +201,7 @@ export const MetadataTab = () => {
             )}
 
             {(type === 'NEWS' || type === 'ANNOUNCEMENT') && (
-                <Form.Item label="Сплэш-картинка" name="coverImage" valuePropName="value">
+                <Form.Item label="Сплэш-картинка (только предпросмотр, отсутствует при экспорте)" name="coverImage" valuePropName="value">
                     <CoverImageUploader />
                 </Form.Item>
             )}

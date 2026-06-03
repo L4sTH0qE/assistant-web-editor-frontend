@@ -246,8 +246,8 @@ export const TransferModal = ({ isOpen, onClose }) => {
 
                         <div
                             style={{
-                                background: item.isCode ? '#fff' : '#fafafa',
-                                border: item.isCode ? '1px dashed #ccc' : 'none',
+                                background: '#fff',
+                                border: '1px dashed #ccc',
                                 padding: 10,
                                 marginTop: 10,
                                 borderRadius: 4,
