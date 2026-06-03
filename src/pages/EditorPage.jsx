@@ -390,7 +390,7 @@ const EditorPage = () => {
                                     syncStatus === 'DESYNCED' ? '#faad14' :
                                         'rgba(255, 255, 255, 0.5)',
                             }}>
-                                {syncStatus === 'SYNCED' && <CloudSyncOutlined spin={loading} style={{fontSize: 18}}/>}
+                                {syncStatus === 'SYNCED' && <CloudSyncOutlined style={{fontSize: 18}}/>}
                                 {syncStatus === 'DESYNCED' && <WarningOutlined style={{fontSize: 18}}/>}
                                 {(!syncStatus || syncStatus === 'DRAFT') && <CloudOutlined style={{fontSize: 18}}/>}
                             </div>
