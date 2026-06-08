@@ -50,7 +50,7 @@ const LoginPage = () => {
         setLoading(true);
         try {
             setTempData({ email: values.username, password: values.password });
-            await api.post('/auth/register/send-code', { username: values.username });
+            await api.post('/auth/register/send-code', { username: values.username, password: values.password });
             message.success('Код отправлен на почту!');
             setStep('REG_VERIFY');
         } catch (error) {
@@ -125,7 +125,7 @@ const LoginPage = () => {
     const RegisterForm = () => (
         <Form name="register" onFinish={onRegRequestCode} layout="vertical" requiredMark={false}>
             <Alert message="Доступ разрешен только для почты в домене @hse.ru" type="info" showIcon style={{marginBottom: 16}}/>
-            <Form.Item name="username" label={<Text strong>Корпоративная почта ВШЭ</Text>} rules={[
+            <Form.Item name="username" label={<Text strong>Корпоративная почта НИУ ВШЭ</Text>} rules={[
                 { required: true, message: 'Введите почту!' },
                 { validator(_, value) {
                         if (!value) return Promise.resolve();
