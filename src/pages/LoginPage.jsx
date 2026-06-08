@@ -129,7 +129,7 @@ const LoginPage = () => {
                 { required: true, message: 'Введите почту!' },
                 { validator(_, value) {
                         if (!value) return Promise.resolve();
-                        if (!value.endsWith('@hse.ru')) return Promise.resolve();
+                        if (value.endsWith('@hse.ru')) return Promise.resolve();
                         return Promise.reject(new Error('Разрешен только домен @hse.ru!'));
                     }}
             ]}>
